@@ -1,0 +1,32 @@
+{
+  "name": "infonic",
+  "version": "1.0.0",
+  "description": "Chat Application",
+  "main": "index.js",
+  "homepage": "http://localhost:4000/client",
+  "scripts": {
+    "start": "node -r esm server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon -r esm server.js"
+  },
+  "author": "Vasim Aalam",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "esm": "^3.2.25",
+    "express": "^4.17.1",
+    "file-type": "^16.5.3",
+    "jimp": "^0.16.1",
+    "joi": "17.4.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.12.1",
+    "multer": "^1.4.2",
+    "nodemailer": "^6.7.0",
+    "read-chunk": "^4.0.2",
+    "socket.io": "^4.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}
