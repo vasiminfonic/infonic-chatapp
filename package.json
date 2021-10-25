@@ -1,12 +1,12 @@
 {
-  "name": "infonic",
+  "name": "server",
   "version": "1.0.0",
   "description": "Chat Application",
   "main": "index.js",
   "scripts": {
     "start": "node -r esm server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon -r esm server.js"
+    "dev": "nodemon -r esm server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Vasim Aalam",
   "license": "ISC",

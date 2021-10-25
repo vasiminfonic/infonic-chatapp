@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 import cors from 'cors'
 import socket from 'socket.io';
 import fs from 'fs'
-import Jimp from 'jimp';
 import path from 'path';
 import nodemailer from 'nodemailer'
 // import {fileTypeFromBuffer} from 'file-type';
@@ -53,9 +52,8 @@ app.get('/client/*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'react/client/build', 'index.html'));
 });
 
-
 //mainUi
-app.use('/', express.static(path.join(__dirname, 'react/main/build')));
+app.use(express.static(path.join(__dirname, 'react/main/build')));
 app.get('/*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'react/main/build', 'index.html'));
 });
