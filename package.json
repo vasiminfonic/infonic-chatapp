@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Chat Application",
   "main": "index.js",
-  "homepage": "http://localhost:4000/client",
   "scripts": {
     "start": "node -r esm server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
