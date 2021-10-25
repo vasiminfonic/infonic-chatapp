@@ -15,8 +15,6 @@ import { errorHandler } from "./errorHandler";
 import router from "./routers";
 import { getCurrentUser, userDisconnect, joinUser, getCurrentRoom, checkRoom } from "./socketUsers";
 import Message from "./models/message";
-import { match } from "assert";
-import User from "./models/user";
 
 // import socketIo from "./socketIo";
 
