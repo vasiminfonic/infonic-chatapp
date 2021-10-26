@@ -75,5 +75,17 @@ const loginController = {
             return next(customErrorHandler.serverError(err));
         }
     },
+
+    async getAdmin (req,res,next){
+        try {
+            const admin = await User.findOne({role: 'admin'},'-password -updatedAt -__v ');
+            if(!admin){
+                return next(customErrorHandler.wrongCredentials())
+            }
+            res.status(200).json({data: admin});
+        } catch (err) {
+            return next(customErrorHandler.serverError(err));
+        }
+    },
 }
 export default loginController  

@@ -6,6 +6,7 @@ const router = express.Router();
 router.post('/register',loginController.register);
 router.post('/login',loginController.login);
 router.get('/user', loginController.getUser);
+router.get('/admin',loginController.getAdmin );
 
 
 router.get('/message',messageController.getMessages);

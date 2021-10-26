@@ -44,19 +44,12 @@ app.use('/api', router);
 
 app.use(errorHandler);
 
-//clientUi
-app.use('/client',express.static(path.join(__dirname, 'react/client/build')));
-app.get('/client/*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, 'react/client/build', 'index.html'));
-});
 
 //mainUi
 app.use(express.static(path.join(__dirname, 'react/main/build')));
 app.get('/*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'react/main/build', 'index.html'));
 });
-
-
 
 
 const server = app.listen(PORT, () => {
@@ -197,7 +190,6 @@ io.on("connection", (socket) => {
         html: `<b>Hello world<br>${value.text}</b>`, // html body
       });
       console.log(info);
-
     }
     }
 
