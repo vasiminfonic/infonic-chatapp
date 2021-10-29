@@ -1,12 +1,17 @@
 import express from "express";
-import { loginController, messageController } from "../controllers";
+import { loginController, messageController, userController } from "../controllers";
 
 
 const router = express.Router();
 router.post('/register',loginController.register);
 router.post('/login',loginController.login);
-router.get('/user', loginController.getUser);
-router.get('/admin',loginController.getAdmin );
+router.post('/admin/login',loginController.adminLogin);
+
+
+router.get('/user', userController.getUser);
+router.get('/admin',userController.getAdmin );
+router.get('/user/name/:search',userController.getUserSearch);
+router.get('/user/messages/:id', userController.getUserMessages);
 
 
 router.get('/message',messageController.getMessages);

@@ -69,29 +69,29 @@ io.on("connection", (socket) => {
   //for a new user joining the room
   let id;
   let username;
-  socket.on("joinChat", ({user, _id}) => {
+  socket.on("joinChat", ({sender, _id}) => {
     // username = user.name
     //* create user
-    const pUser = joinUser(socket.id, user, _id);
+    const pUser = joinUser(socket.id, sender, _id);
     // console.log(_id, "=id");
 
     socket.join(pUser.room);
 
     //display a welcome message to the user who have joined a room
-    if(pUser.user){
-    socket.emit("message", {
-      _id: _id,
-      name: pUser.user.name,
-      text: `Welcome ${pUser.user.name}`,
-      type: pUser.user.role
-    });
-    //displays a joined room message to all other room users except that particular user
-    socket.broadcast.emit("userJoin", {
-      _id: _id,
-      name: pUser.user.name,
-      text: `${pUser.user.name} has joined the chat`,
-    });
-  }
+  //   if(pUser.user){
+  //   socket.emit("message", {
+  //     _id: _id,
+  //     name: pUser.user.name,
+  //     text: `Welcome ${pUser.user.name}`,
+  //     type: pUser.user.role
+  //   });
+  //   //displays a joined room message to all other room users except that particular user
+  //   socket.broadcast.emit("userJoin", {
+  //     _id: _id,
+  //     name: pUser.user.name,
+  //     text: `${pUser.user.name} has joined the chat`,
+  //   });
+  // }
   });
   //user sending message
   socket.on("chat", async (value) => {
@@ -147,20 +147,18 @@ io.on("connection", (socket) => {
 
       io.to(value._id).emit("message", {
         _id: value._id,
-        name: value.user.name,
-        type: value.user.role,
+        name: value.sender.name,
         text: value.text,
-        user: value.user,
+        sender: value.sender,
         ...(value.file && { file: [fileurl] })
       });
       socket.broadcast.emit("userMessage", {
         _id: value._id,
-        name: value.user.name,
-        text: `${value.text}`,
+        name: value.sender.name,
+        message: `${value.text}`
       });
-      
       try {
-        await Message.create(value.text, value.user._id, value.user.role, fileurl, value.receiver);
+        await Message.create(value.text, value.sender._id, value.sender.role, fileurl, value.receiver);
       } catch(err) {
         console.log(err);
       }

@@ -1,12 +1,9 @@
 const totalUser = [];
 
 // joins the user to the specific chatroom
-export function joinUser(id, user, room) {
-  const p_user = { id, user, room };
-
+export function joinUser(id, sender, room) {
+  const p_user = { id, sender, room };
   totalUser.push(p_user);
-  // console.log(totalUser, "users");
-  
   return p_user;
 }
 
@@ -21,7 +18,7 @@ export function getCurrentRoom(roomid) {
 }
 
 export function isAdmin(data){
-      if(data.user._id !== data.room){
+      if(data.sender._id !== data.room){
         return true;
       }
       else{
