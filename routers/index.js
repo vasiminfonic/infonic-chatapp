@@ -1,9 +1,11 @@
 import express from "express";
 import { loginController, messageController, userController } from "../controllers";
+import middle from '../middlewares'
+
 
 
 const router = express.Router();
-router.post('/register',loginController.register);
+router.post('/register',middle.handleMultipartData,loginController.register);
 router.post('/login',loginController.login);
 router.post('/admin/login',loginController.adminLogin);
 

@@ -1,14 +1,15 @@
 
 import jwt from 'jsonwebtoken';
 import joi from 'joi';
-import { JWTSTRING } from '../../config';
+import { JWTSTRING, SERVER_Path } from '../../config';
 import { customErrorHandler } from "../../errorHandler";
 import User from "../../models/user";
 
 const userController = {
     async getUser(req, res, next) {
         const { authorization } = req.headers;
-        const token = authorization.split(' ')[1]
+        if(authorization){
+            const token = authorization.split(' ')[1]
 
         try {
             const { data: { _id } = {} } = jwt.verify(token, JWTSTRING)
@@ -21,6 +22,9 @@ const userController = {
         } catch (err) {
             return next(customErrorHandler.serverError(err));
         }
+
+        }
+        
     },
 
     async getAdmin(req, res, next) {
@@ -50,6 +54,7 @@ const userController = {
     async getUserMessages(req, res, next) {
         const { id } = req.params;
         try {
+            // const data = await User.find()
             const userMessage = await User.aggregate([
                 { $match: { role: {$ne: 'admin'}}},
                 {
@@ -57,7 +62,7 @@ const userController = {
                         from: 'messages',
                         // localField: '_id',
                         // foreignField: 'sender',
-                        let: {id: '$_id'},
+                        let: {id: '$_id', img: '$image'},
                         as: 'messages',
                         pipeline: [
                             {
@@ -77,7 +82,8 @@ const userController = {
                 },
                 {
                     $addFields: {
-                        "unseenMessages": { $size: "$messages" }
+                        "unseenMessages": { $size: "$messages" },
+                        'image': {$concat: [SERVER_Path,'/','$image']},
                     }
                 },
                 {
@@ -85,6 +91,7 @@ const userController = {
                      _id: 1,
                      name: 1,
                      unseenMessages: 1,
+                     image: 1
                     }
                  }
 
@@ -92,7 +99,7 @@ const userController = {
             if (!userMessage) {
                 return next(customErrorHandler.emptyData());
             }
-            res.status(200).json({ data: userMessage })
+            res.status(200).json({ data:userMessage })
 
         } catch (err) {
             console.log(err);

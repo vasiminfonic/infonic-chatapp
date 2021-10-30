@@ -13,7 +13,7 @@ import nodemailer from 'nodemailer'
 import { PORT, MONGODB_URL, SERVER_Path } from "./config";
 import { errorHandler } from "./errorHandler";
 import router from "./routers";
-import { getCurrentUser, userDisconnect, joinUser, getCurrentRoom, checkRoom } from "./socketUsers";
+import { getCurrentUser, userDisconnect, joinUser, getCurrentRoom, checkRoom,totalOnlineUsers } from "./socketUsers";
 import Message from "./models/message";
 
 // import socketIo from "./socketIo";
@@ -62,20 +62,20 @@ const server = app.listen(PORT, () => {
 
 
 global.io = socket(server);
+global.appRoot = path.resolve(__dirname);
 
 //initializing the socket io connection 
 io.on("connection", (socket) => {
   console.log('Socket is Connected')
   //for a new user joining the room
-  let id;
-  let username;
   socket.on("joinChat", ({sender, _id}) => {
     // username = user.name
     //* create user
     const pUser = joinUser(socket.id, sender, _id);
-    // console.log(_id, "=id");
+    console.log(socket.id, "=id");
 
     socket.join(pUser.room);
+   
 
     //display a welcome message to the user who have joined a room
   //   if(pUser.user){
@@ -86,13 +86,24 @@ io.on("connection", (socket) => {
   //     type: pUser.user.role
   //   });
   //   //displays a joined room message to all other room users except that particular user
-  //   socket.broadcast.emit("userJoin", {
-  //     _id: _id,
-  //     name: pUser.user.name,
-  //     text: `${pUser.user.name} has joined the chat`,
-  //   });
+    socket.broadcast.emit("userJoin", {
+      _id: pUser.sender._id,
+      name: pUser.sender.name,
+      text: `${pUser.sender.name} has joined the chat`,
+    });
   // }
   });
+  socket.on('loggedIn',()=>{
+    const userData = totalOnlineUsers();
+   
+    setTimeout(()=>{
+      console.log(userData);
+      socket.broadcast.emit('dataInit',{
+        users: userData
+      })
+    },4000)
+    
+  })
   //user sending message
   socket.on("chat", async (value) => {
     //gets the room user and the message sent
@@ -192,16 +203,20 @@ io.on("connection", (socket) => {
     }
 
   });
+
   socket.on("disconnect", () => {
     //the user is deleted from array of users and a left room message displayed
-    const p_user = userDisconnect(socket.id);
-    if (id != undefined) {
-      io.to(id).emit("message", {
-        _id: id,
-        name: username,
-        text: `${username} has left the chat`,
+
+    const dUser = userDisconnect(socket.id);
+    console.log(dUser, 'disconnect');
+    if(dUser){
+      socket.broadcast.emit("userDisconnet",{
+        _id: dUser.sender._id,
+        name: dUser.sender.name,
+        text: `${dUser.sender._id} has left the chat`,
       });
     }
+      
   });
 });
 

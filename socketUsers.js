@@ -45,4 +45,9 @@ export function userDisconnect(id) {
     return totalUser.splice(index, 1)[0];
   }
 }
+export function totalOnlineUsers(){
+  return totalUser;
+}
+console.log(totalUser);
+
 
