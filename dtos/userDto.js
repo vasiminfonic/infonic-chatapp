@@ -6,8 +6,6 @@ class UserDto {
     country;
     phone;
     createdAt;
-
-
     constructor(user){
         this._id = user._id;
         this.name = user.name;

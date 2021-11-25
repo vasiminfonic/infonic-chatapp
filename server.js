@@ -142,7 +142,7 @@ io.on("connection", (socket) => {
         filePath = `${Date.now()}-${Math.round(
           Math.random() * 1e9
         )}.${fileExt}`;
-        fileurl = `${SERVER_Path}/uploads/${filePath}`;
+        fileurl = `/uploads/${filePath}`;
 
         try {
           fs.writeFile(`./uploads/${filePath}`, buffer, 'binary',(err) => {

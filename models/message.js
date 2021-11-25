@@ -1,16 +1,17 @@
 import mongoose from 'mongoose'
-import User from './user'
+import { SERVER_Path } from '../config';
+
 
 
 const messageSchema = mongoose.Schema({
     message:String,
     type:{type: String, default:'user'},
-    file: [String],
+    file: [{type:String, get: (file)=>`${SERVER_Path}${file}`}],
     sender: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
     receiver: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
     seen: {type: Boolean, default: false},
     orderId: {type: mongoose.Schema.Types.ObjectId, ref: 'Order'}
-}, {timestamps: true})
+}, {timestamps: true, toJSON: {getters: true}, id:false});
 
 
 messageSchema.statics.create = (content, sender, type, file, receiver, order) => {
