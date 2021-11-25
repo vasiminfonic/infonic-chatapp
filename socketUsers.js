@@ -1,4 +1,4 @@
-const totalUser = [];
+let totalUser = [];
 
 // joins the user to the specific chatroom
 export function joinUser(id, sender, room) {
@@ -41,9 +41,12 @@ export function checkRoom(roomid){
 // called when the user leaves the chat and its user object deleted from array
 export function userDisconnect(id) {
   const index = totalUser.findIndex((user) => user.id === id);
+  const tempTotal = totalUser;
+  totalUser = tempTotal.filter((e,i)=>i!==index);
   if (index !== -1) {
-    return totalUser.splice(index, 1)[0];
+    return tempTotal.splice(index, 1)[0];
   }
+
 }
 export function totalOnlineUsers(){
   return totalUser;

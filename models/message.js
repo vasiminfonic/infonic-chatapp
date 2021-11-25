@@ -8,17 +8,19 @@ const messageSchema = mongoose.Schema({
     file: [String],
     sender: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
     receiver: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
-    seen: {type: Boolean, default: false}
+    seen: {type: Boolean, default: false},
+    orderId: {type: mongoose.Schema.Types.ObjectId, ref: 'Order'}
 }, {timestamps: true})
 
 
-messageSchema.statics.create = (content, sender, type, file, receiver) => {
+messageSchema.statics.create = (content, sender, type, file, receiver, order) => {
     let msg = new messageModal({
         message: content,
         type: type,
         sender: sender,
         receiver: receiver,
-        ...(file && {file: file})
+        ...(file && {file: file}),
+        ...(order && {orderId: order})
     });
     return msg.save();
 }

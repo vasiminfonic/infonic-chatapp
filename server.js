@@ -93,17 +93,15 @@ io.on("connection", (socket) => {
     });
   // }
   });
-  socket.on('loggedIn',()=>{
+
+  socket.on('checkOnline',()=>{
     const userData = totalOnlineUsers();
-   
-    setTimeout(()=>{
-      console.log(userData);
-      socket.broadcast.emit('dataInit',{
-        users: userData
+    const users = userData.map(e=>e.sender._id);
+      socket.emit('onlines',{
+        users
       })
-    },4000)
-    
   })
+
   //user sending message
   socket.on("chat", async (value) => {
     //gets the room user and the message sent
@@ -117,6 +115,7 @@ io.on("connection", (socket) => {
       let filePath;
       let fileurl;
       let fileExt;
+      
       if (value.file) {
        
         var matches = value.file.match(/^data:([A-Za-z-+\/\.]+);base64,(.+)$/);     
@@ -155,21 +154,33 @@ io.on("connection", (socket) => {
           console.log(err);
         }
       }
-
-      io.to(value._id).emit("message", {
-        _id: value._id,
-        name: value.sender.name,
-        text: value.text,
-        sender: value.sender,
-        ...(value.file && { file: [fileurl] })
-      });
+      if(value.orderId){
+        io.to(value._id).emit("orderMessage", {
+          _id: value._id,
+          name: value.sender.name,
+          text: value.text,
+          sender: value.sender,
+          orderId: value.orderId,
+          ...(value.file && { file: [fileurl] }),
+        });
+      }else{
+        io.to(value._id).emit("message", {
+          _id: value._id,
+          name: value.sender.name,
+          text: value.text,
+          sender: value.sender,
+          ...(value.file && { file: [fileurl] }),
+        });
+      }
       socket.broadcast.emit("userMessage", {
         _id: value._id,
+        sender: value.sender,
+        orderId: value.orderId ? value.orderId : false,
         name: value.sender.name,
         message: `${value.text}`
       });
       try {
-        await Message.create(value.text, value.sender._id, value.sender.role, fileurl, value.receiver);
+        await Message.create(value.text, value.sender._id, value.sender.role, fileurl, value.receiver, value.orderId);
       } catch(err) {
         console.log(err);
       }

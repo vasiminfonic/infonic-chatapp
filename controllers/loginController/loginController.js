@@ -5,11 +5,15 @@ import { JWTSTRING } from '../../config';
 import { customErrorHandler } from "../../errorHandler";
 import User from "../../models/user";
 import fs from 'fs';
+import UserDto from '../../dtos/userDto';
 
 const loginController = {
     async register(req, res, next) {
         const { name, email, password} = req.body;
-        const image = req.file.path;
+        let image
+        if(req.file){
+         image = req.file.path;
+        }
 
         try {
             const { error } = joi.object({
@@ -70,7 +74,7 @@ const loginController = {
             const token = jwt.sign({
                 data: { _id: user._id, role: user.role }
             }, JWTSTRING, { expiresIn: '1h' });
-            res.status(200).json({ message: 'Logged In Successfully', token });
+            res.status(200).json({ message: 'Logged In Successfully', token, user: new UserDto(user)});
 
         } catch (err) {
             console.log(err)
@@ -108,6 +112,32 @@ const loginController = {
             console.log(err)
             return next(customErrorHandler.serverError(err));
         }
+    },
+    async getRefresh(req, res, next) {
+        const { authorization } = req.headers;
+        if (authorization) {
+            const reqtoken = authorization.split(' ')[1]
+
+            try {
+                const { data: { _id } = {} } = jwt.verify(reqtoken, JWTSTRING)
+                console.log(_id);
+                if(!_id){
+                    return next(customErrorHandler.serverError());
+                }
+                const user = await User.findOne({ _id }, '-password -updatedAt -__v ');
+                if (!user) {
+                    return next(customErrorHandler.wrongCredentials())
+                }
+                const token = jwt.sign({
+                    data: { _id: user._id, role: user.role }
+                }, JWTSTRING, { expiresIn: '1h' });
+                res.status(200).json({ data:{ user , token }});
+            } catch (err) {
+                return next(customErrorHandler.serverError(err));
+            }
+
+        }
+
     },
 
 
