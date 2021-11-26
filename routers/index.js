@@ -10,6 +10,8 @@ router.post('/register',middle.handleMultipartData,loginController.register);
 router.post('/login',loginController.login);
 router.post('/admin/login',loginController.adminLogin);
 router.get('/refresh',loginController.getRefresh);
+router.post('/forgot/otp',loginController.getFogotUser);
+router.post('/forgot/verify',loginController.verifyUserOtp);
 
 
 router.get('/user', userController.getUser);
