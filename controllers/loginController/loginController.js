@@ -138,7 +138,7 @@ const loginController = {
         JWTSTRING,
         { expiresIn: "1h" }
       );
-      res.status(200).json({ message: "Logged In Successfully", token });
+      res.status(200).json({ message: "Logged In Successfully", token, user });
     } catch (err) {
       console.log(err);
       return next(customErrorHandler.serverError(err));

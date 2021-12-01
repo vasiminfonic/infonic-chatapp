@@ -22,6 +22,7 @@ router.get('/user/name/:search',userController.getUserSearch);
 router.get('/user/messages/:id', userController.getUserMessages);
 
 
+
 router.get('/order', orderController.getOrder);
 router.post('/order', middle.handleMultipartDataOrder, orderController.postOrder);
 router.get(`/order/user/:id`, orderController.getUserByOrder);
@@ -31,9 +32,9 @@ router.get('/orders/user/:id', orderController.getOrdersofUser);
 
 router.post('/mainorder',middle.handleMultipartDataMainOrder ,mainOrderController.addOrder);
 router.get('/mainorder', mainOrderController.getOrders)
+router.post('/mainorder/:id', mainOrderController.updateOrder)
 router.get('/mainorder/:id',mainOrderController.getOrderById)
 router.get('/mainorder/user/:id',mainOrderController.getOrdersofUser)
-
 
 
 router.get('/message',messageController.getMessages);
