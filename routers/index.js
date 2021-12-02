@@ -1,7 +1,9 @@
 import express from "express";
 import { loginController, messageController, orderController, userController } from "../controllers";
 import mainOrderController from "../controllers/mainOrderController";
+import translationController from "../controllers/translationController";
 import middle from '../middlewares'
+
 
 
 
@@ -32,9 +34,28 @@ router.get('/orders/user/:id', orderController.getOrdersofUser);
 
 router.post('/mainorder',middle.handleMultipartDataMainOrder ,mainOrderController.addOrder);
 router.get('/mainorder', mainOrderController.getOrders)
-router.post('/mainorder/:id', mainOrderController.updateOrder)
+router.put(
+  "/mainorder/:id",
+  middle.handleMultipartDataMainOrder,
+  mainOrderController.updateOrder
+);
 router.get('/mainorder/:id',mainOrderController.getOrderById)
 router.get('/mainorder/user/:id',mainOrderController.getOrdersofUser)
+
+
+router.post(
+  "/translation",
+  middle.handleMultipartDataMainOrder,
+  translationController.addOrder
+);
+router.get("/translation", translationController.getOrders);
+router.put(
+  "/translation/:id",
+  middle.handleMultipartDataMainOrder,
+  translationController.updateOrder
+);
+router.get("/translation/:id", translationController.getOrderById);
+router.get("/translation/user/:id", translationController.getOrdersofUser);
 
 
 router.get('/message',messageController.getMessages);

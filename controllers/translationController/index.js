@@ -1,26 +1,26 @@
-import MainOrder from "../../models/mainOrder";
+import TranslationOrder from "../../models/tralationOrders";
 import { customErrorHandler } from "../../errorHandler";
 import User from "../../models/user";
 import crypto from "crypto";
-import console from "console";
 
-const mainOrderController = {
+const translationController = {
   async addOrder(req, res, next) {
     try {
       const {
         name,
         email,
         phone,
-        paperType,
-        paperLength,
-        education,
-        referencing,
-        subject,
-        question,
-        deadline,
         country,
         websiteId,
         assignmentId,
+        service_req,
+        sourceLanguage,
+        targetlanguage,
+        your_words,
+        certification,
+        message,
+        notarization,
+        deadline,
         status,
       } = req.body;
       let user;
@@ -32,6 +32,8 @@ const mainOrderController = {
             name,
             email,
             password,
+            country,
+            phone,
           });
         }
       } catch (err) {
@@ -39,15 +41,16 @@ const mainOrderController = {
         return next(customErrorHandler.serverError());
       }
       const filesUrl = req.files.map((e) => e.path);
-      const order = await MainOrder.create({
+      const order = await TranslationOrder.create({
         userId: user._id,
-        paperType,
-        paperLength,
-        education,
-        referencing,
         phone,
-        subject,
-        question,
+        service_req,
+        sourceLanguage,
+        targetlanguage,
+        your_words,
+        certification,
+        message,
+        notarization,
         deadline,
         country,
         websiteId,
@@ -68,12 +71,12 @@ const mainOrderController = {
   },
   async getOrders(req, res, next) {
     try {
-      const orders = await MainOrder.find({}, null, {
+      const orders = await TranslationOrder.find({}, null, {
         limit: 10,
         sort: {
           createdAt: -1,
         },
-      }).populate("userId", "name email");
+      }).populate("userId", "name email image");
       if (!orders) {
         return next(customErrorHandler.emptyData());
       }
@@ -85,7 +88,7 @@ const mainOrderController = {
   async getOrderById(req, res, next) {
     const { id } = req.params;
     try {
-      const order = await MainOrder.findById(id).populate(
+      const order = await TranslationOrder.findById(id).populate(
         "userId",
         "name email"
       );
@@ -104,8 +107,8 @@ const mainOrderController = {
     const skip = +(page < 0 ? 0 : limit * page);
 
     try {
-      const count = await MainOrder.countDocuments({ userId: id });
-      const order = await MainOrder.find({ userId: id }, "-__v", {
+      const count = await TranslationOrder.countDocuments({ userId: id });
+      const order = await TranslationOrder.find({ userId: id }, "-__v", {
         limit,
         skip,
       });
@@ -121,33 +124,37 @@ const mainOrderController = {
   async updateOrder(req, res, next) {
     try {
       const {
-        paperType,
-        paperLength,
-        education,
-        referencing,
-        subject,
-        question,
+        service_req,
+        sourceLanguage,
+        targetlanguage,
+        your_words,
+        certification,
+        message,
+        notarization,
         deadline,
         country,
+        phone,
         status,
       } = req.body;
       const filesUrl = req.files.map((e) => e.path);
-      const order = await MainOrder.findByIdAndUpdate(
+      const order = await TranslationOrder.findByIdAndUpdate(
         req.params.id,
         {
-          ...(paperType && { paperType }),
-          ...(paperLength && { paperLength }),
-          ...(subject && { subject }),
-          ...(question && { question }),
+          ...(service_req && { service_req }),
+          ...(sourceLanguage && { sourceLanguage }),
+          ...(targetlanguage && { targetlanguage }),
+          ...(your_words && { your_words }),
           ...(deadline && { deadline }),
-          ...(education && { education }),
-          ...(referencing && { referencing }),
+          ...(certification && { certification }),
+          ...(message && { message }),
           ...(country && { country }),
+          ...(notarization && { notarization }),
           ...(status && { status }),
+          ...(phone && { phone }),
           ...(filesUrl.length && { files: filesUrl }),
         },
         { new: true, runValidators: true }
-      ).populate('userId', 'name email image phone');
+      ).populate("userId", "name email image phone");
       if (!order) {
         return next(customErrorHandler.emptyData("Could't updated"));
       }
@@ -160,4 +167,4 @@ const mainOrderController = {
     }
   },
 };
-export default mainOrderController;
+export default translationController;

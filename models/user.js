@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     phone: {type: String, required: false},
     country: {type: String, required: false},
     password: {type: String, required: true},
-    image: {type: String, get:(image)=>`${SERVER_Path}/${image}`},
+    image: {type: String, get:(image)=>image?`${SERVER_Path}/${image}`:''},
     role: {type: String, default: 'user'}
 },{timestamps: true, toJSON: {getters: true}, id:false});
 
