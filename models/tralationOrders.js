@@ -11,6 +11,7 @@ function genAssignId() {
 
 const translationSchema = mongoose.Schema(
   {
+    
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
