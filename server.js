@@ -34,7 +34,11 @@ db.once('open', () => {
   console.log('DB connected...');
 });
 
-app.use(cors());
+app.use(
+  cors({
+
+  })
+);
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json({ limit: "100mb" }));
 

@@ -54,8 +54,13 @@ router.put(
   middle.handleMultipartDataMainOrder,
   translationController.updateOrder
 );
+router.get(
+  "/translation/chat-order",
+  translationController.getChatsOrder
+);
 router.get("/translation/:id", translationController.getOrderById);
 router.get("/translation/user/:id", translationController.getOrdersofUser);
+
 
 
 router.get('/message',messageController.getMessages);

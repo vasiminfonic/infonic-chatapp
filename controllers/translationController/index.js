@@ -70,9 +70,14 @@ const translationController = {
     }
   },
   async getOrders(req, res, next) {
+    const { page, row } = req.query;
+    const limit = +(row ? (row < 5 ? 5 : row) : 5);
+    const skip = +(page < 0 ? 0 : limit * page);
     try {
+      const count = await TranslationOrder.countDocuments({ });
       const orders = await TranslationOrder.find({}, null, {
-        limit: 10,
+        limit,
+        skip,
         sort: {
           createdAt: -1,
         },
@@ -80,7 +85,7 @@ const translationController = {
       if (!orders) {
         return next(customErrorHandler.emptyData());
       }
-      res.status(200).json({ data: orders });
+      res.status(200).json({ data: orders, total: count });
     } catch (error) {
       console.log(error);
     }
@@ -166,5 +171,75 @@ const translationController = {
       next(customErrorHandler.serverError(e));
     }
   },
+   async getChatsOrder(req, res, next){
+     
+     try {
+       const data = await TranslationOrder.aggregate([
+         {
+           $lookup: {
+             from: "messages",
+             let: { id: "$_id" },
+             as: "messages",
+             pipeline: [
+               {
+                 $match: {
+                   $expr: {
+                     $and: [
+                       { $eq: ["$$id", "$orderId"] },
+                       // { "$messages": { $exists: true, $ne: [] }}
+                     ],
+                   },
+                 },
+               },
+             ],
+           },
+         },
+         {
+           $match: {
+             $and: [{ messages: { $exists: true, $not: { $size: 0 } } }],
+           },
+         },
+         {
+           $addFields: {
+             unseenMessages: { $size: "$messages" },
+           },
+         },
+         {
+           $project: {
+             _id: 1,
+             unseenMessages: 1,
+             userId: 1,
+             assignmentId: 1,
+             status: 1,
+             files: 1,
+             phone: 1,
+             service_req: 1,
+             sourceLanguage: 1,
+             targetlanguage: 1,
+             your_words: 1,
+             certification: 1,
+             message: 1,
+             notarization: 1,
+             deadline: 1,
+             country: 1,
+             createdAt: 1,
+             updatedAt: 1,
+           },
+         },
+       ]);
+       if (!data) {
+         return res.json({data:''});
+       }
+       res.status(200).json({data});
+     } catch (err) {
+       console.log(err)
+       return next(customErrorHandler.serverError(err));
+     }
+    
+
+    
+     
+
+  }
 };
 export default translationController;

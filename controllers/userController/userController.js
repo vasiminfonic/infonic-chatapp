@@ -9,16 +9,17 @@ import fs from 'fs';
 
 const userController = {
   async getUsers(req, res, next) {
-    const { page, row } = req.query;
+    const { page, row, user } = req.query;
+    const filter = user ? {role:{$eq: user}}:{role:{$ne: 'admin'}};
     const limit = +(row ? (row < 10 ? 10 : row) : 10);
     const skip = +(page < 0 ? 0 : limit * page);
     try {
-      const total = await User.countDocuments({ role: { $ne: "admin" } });
+      const total = await User.countDocuments(filter);
       if (!total) {
         return next(customErrorHandler.wrongCredentials());
       }
       const users = await User.find(
-        { role: { $ne: "admin" } },
+        filter,
         "-password -updatedAt -__v ",
         { limit, skip }
       );
@@ -27,6 +28,7 @@ const userController = {
       }
       res.status(200).json({ data: users, total });
     } catch (err) {
+      console.log(err);
       return next(customErrorHandler.serverError(err));
     }
   },
@@ -126,6 +128,11 @@ const userController = {
             name: 1,
             unseenMessages: 1,
             image: 1,
+          },
+        },
+        {
+          $project: {
+            messages: -1,
           },
         },
       ]);
