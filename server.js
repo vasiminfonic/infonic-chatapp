@@ -105,6 +105,12 @@ io.on("connection", (socket) => {
         users
       })
   })
+  socket.on('OrderSubmit',(data)=>{
+    const order = data
+    socket.broadcast.emit('newOrder',{
+      order
+    });
+  })
 
   //user sending message
   socket.on("chat", async (value) => {

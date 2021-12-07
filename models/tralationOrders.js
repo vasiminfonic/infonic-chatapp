@@ -18,7 +18,7 @@ const translationSchema = mongoose.Schema(
       required: true,
       auto: true,
     },
-    assignmentId: { type: String, required: false, default: genAssignId() },
+    translationId: { type: String, required: false, default: genAssignId() },
     websiteId: { type: String, required: false },
     service_req: { type: String, required: true },
     sourceLanguage: { type: String, required: true },

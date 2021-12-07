@@ -21,7 +21,7 @@ const userController = {
       const users = await User.find(
         filter,
         "-password -updatedAt -__v ",
-        { limit, skip }
+        { limit, skip, sort:{createdAt: -1}}
       );
       if (!users) {
         return next(customErrorHandler.wrongCredentials());
@@ -132,7 +132,10 @@ const userController = {
         },
         {
           $project: {
-            messages: -1,
+            _id: 1,
+            name: 1,
+            unseenMessages: 1,
+            image: 1,
           },
         },
       ]);

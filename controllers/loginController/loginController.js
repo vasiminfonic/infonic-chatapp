@@ -65,7 +65,7 @@ const loginController = {
         return next(error);
       }
 
-      const user = await User.findOne({ email });
+      const user = await User.findOne({ email, role: {$ne: 'admin'}});
       if (!user) {
         return next(
           customErrorHandler.wrongCredentials(
@@ -138,7 +138,13 @@ const loginController = {
         JWTSTRING,
         { expiresIn: "1h" }
       );
-      res.status(200).json({ message: "Logged In Successfully", token, user });
+      res
+        .status(200)
+        .json({
+          message: "Logged In Successfully",
+          token,
+          user: new UserDto(user),
+        });
     } catch (err) {
       console.log(err);
       return next(customErrorHandler.serverError(err));
@@ -153,11 +159,11 @@ const loginController = {
         const { data: { _id } = {} } = jwt.verify(reqtoken, JWTSTRING);
         console.log(_id);
         if (!_id) {
-          return next(customErrorHandler.serverError());
+          return next(customErrorHandler.serverError('invalid token'));
         }
         const user = await User.findOne({ _id }, "-password -updatedAt -__v ");
         if (!user) {
-          return next(customErrorHandler.wrongCredentials());
+          return next(customErrorHandler.wrongCredentials('token expired'));
         }
         const token = jwt.sign(
           {
@@ -166,7 +172,7 @@ const loginController = {
           JWTSTRING,
           { expiresIn: "1h" }
         );
-        res.status(200).json({ data: { user, token } });
+        res.status(200).json({ user: new UserDto(user), token, message: 'Refreshed'});
       } catch (err) {
         return next(customErrorHandler.serverError(err));
       }

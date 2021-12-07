@@ -58,8 +58,16 @@ router.get(
   "/translation/chat-order",
   translationController.getChatsOrder
 );
+router.get("/translation/chat-order/:id", translationController.getUserChatsOrder);
 router.get("/translation/:id", translationController.getOrderById);
 router.get("/translation/user/:id", translationController.getOrdersofUser);
+router.get("/translation/filter/user/:id", translationController.getOrdersofUserSearch);
+router.get(
+  "/translation/filter/order",
+  translationController.getOrdersofAdimnSearch
+);
+
+
 
 
 
