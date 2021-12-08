@@ -140,7 +140,7 @@ const translationController = {
       ? { translationId: { $regex: translation, $options: "i" } }
       : {};
     const dead = deadline
-      ? { deadline: { $regex: deadline, $options: "i" } }
+      ? { deadline: new Date(deadline)}
       : {};
     try {
       const count = await TranslationOrder.countDocuments({
@@ -173,11 +173,10 @@ const translationController = {
       ? { service_req: { $regex: service, $options: "i" } }
       : {};
     const con = country ? { country: { $regex: country, $options: "i" } } : {};
-    const ids = translation ? { translationId: { $regex: translation } } : {};
-    const dead = deadline
-      ? { deadline: { $regex: deadline, $options: "i" } }
+    const ids = translation
+      ? { translationId: { $regex: translation, $options: "i" } }
       : {};
-
+     const dead = deadline ? { deadline: new Date(deadline) } : {};
     try {
       const count = await TranslationOrder.countDocuments({
         $and: [con, sub, ids, dead],
@@ -247,6 +246,10 @@ const translationController = {
     }
   },
   async getChatsOrder(req, res, next) {
+    const { translation } = req.query;
+    const fTrans = translation
+      ? { translationId: { $regex: translation, $options: "i" } }
+      : {};  
     try {
       const data = await TranslationOrder.aggregate([
         {
@@ -271,7 +274,7 @@ const translationController = {
         { $sort: { createdAt: -1 } },
         {
           $match: {
-            $and: [{ messages: { $exists: true, $not: { $size: 0 } } }],
+            $and: [{ messages: { $exists: true, $not: { $size: 0 } } }, fTrans],
           },
         },
         {
@@ -282,7 +285,7 @@ const translationController = {
                   input: "$messages",
                   as: "message",
                   cond: {
-                    $and:[{$eq: ["$$message.seen", false]}],
+                    $and: [{ $eq: ["$$message.seen", false] }],
                   },
                 },
               },
@@ -294,7 +297,7 @@ const translationController = {
             _id: 1,
             unseenMessages: 1,
             userId: 1,
-            assignmentId: 1,
+            translationId: 1,
             status: 1,
             files: 1,
             phone: 1,
@@ -323,6 +326,8 @@ const translationController = {
   },
   async getUserChatsOrder(req, res, next) {
     const { id } = req.params;
+    const { translation } = req.query;
+    const fTrans = translation ? {translationId: {$regex: translation, $options: 'i'}}: {};  
     try {
       const data = await TranslationOrder.aggregate([
         {
@@ -337,7 +342,7 @@ const translationController = {
                     $and: [
                       { $eq: ["$$id", "$orderId"] },
                       // { "$messages": { $exists: true, $ne: [] }}
-                      {$eq:['$receiver',mongoose.Types.ObjectId(id)]},
+                      { $eq: ["$receiver", mongoose.Types.ObjectId(id)] },
                     ],
                   },
                 },
@@ -351,6 +356,7 @@ const translationController = {
             $and: [
               { messages: { $exists: true, $not: { $size: 0 } } },
               { userId: { $eq: mongoose.Types.ObjectId(id) } },
+              fTrans,
             ],
           },
         },
@@ -374,7 +380,7 @@ const translationController = {
             _id: 1,
             unseenMessages: 1,
             userId: 1,
-            assignmentId: 1,
+            translationId: 1,
             status: 1,
             files: 1,
             phone: 1,

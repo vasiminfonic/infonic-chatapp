@@ -35,9 +35,7 @@ db.once('open', () => {
 });
 
 app.use(
-  cors({
-
-  })
+  cors()
 );
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json({ limit: "100mb" }));
@@ -125,6 +123,7 @@ io.on("connection", (socket) => {
       let filePath;
       let fileurl;
       let fileExt;
+      let tempPath;
       
       if (value.file) {
        
@@ -153,6 +152,7 @@ io.on("connection", (socket) => {
           Math.random() * 1e9
         )}.${fileExt}`;
         fileurl = `/uploads/${filePath}`;
+        tempPath = `${SERVER_Path}${fileurl}`;
 
         try {
           fs.writeFile(`./uploads/${filePath}`, buffer, 'binary',(err) => {
@@ -171,7 +171,8 @@ io.on("connection", (socket) => {
           text: value.text,
           sender: value.sender,
           orderId: value.orderId,
-          ...(value.file && { file: [fileurl] }),
+          // translationId: value.translationId,
+          ...(value.file && { file: [tempPath] }),
         });
       }else{
         io.to(value._id).emit("message", {
@@ -179,7 +180,7 @@ io.on("connection", (socket) => {
           name: value.sender.name,
           text: value.text,
           sender: value.sender,
-          ...(value.file && { file: [fileurl] }),
+          ...(value.file && { file: [tempPath] }),
         });
       }
       socket.broadcast.emit("userMessage", {
