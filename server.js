@@ -103,18 +103,17 @@ io.on("connection", (socket) => {
         users
       })
   })
-  socket.on('OrderSubmit',(data)=>{
+  socket.on('orderSubmit',(data)=>{
     const order = data
-    socket.broadcast.emit('newOrder',{
-      order
-    });
+    console.log(data);
+    socket.broadcast.emit('newOrder',order);
   })
 
   //user sending message
   socket.on("chat", async (value) => {
     //gets the room user and the message sent
     // const pUser = getCurrentUser(socket.id);
-    console.log(value.text,'socket');
+    console.log(value,'socket');
     
 
     if (value._id != undefined) {

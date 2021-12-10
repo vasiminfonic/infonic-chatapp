@@ -13,7 +13,6 @@ const translationController = {
         phone,
         country,
         websiteId,
-        assignmentId,
         service_req,
         sourceLanguage,
         targetlanguage,
@@ -42,7 +41,7 @@ const translationController = {
         return next(customErrorHandler.serverError());
       }
       const filesUrl = req.files.map((e) => e.path);
-      const order = await TranslationOrder.create({
+      let order = await TranslationOrder.create({
         userId: user._id,
         phone,
         service_req,
@@ -52,19 +51,41 @@ const translationController = {
         certification,
         message,
         notarization,
+        websiteId,
         deadline,
         country,
-        websiteId,
-        assignmentId,
         status,
         ...(filesUrl.length && { files: filesUrl }),
       });
       if (!order) {
         return next(customErrorHandler.emptyData());
       }
+      const userData = {
+        _id: user._id,
+        name: user.name,
+        email:user.email,
+        image: user.image ? user.image : '',
+      }
+      const orderData = {
+        _id: order._id,
+        phone: order.phone,
+        service_req: order.service_req,
+        sourceLanguage: order.sourceLanguage,
+        targetlanguage: order.targetlanguage,
+        your_words: order.your_words,
+        certification: order.certification,
+        message: order.message,
+        notarization: order.notarization,
+        deadline: order.deadline,
+        country: order.country,
+        status: order.status,
+        translationId: order.translationId,
+        userId: userData,
+      };
+     console.log(order);
       res
         .status(200)
-        .json({ message: "Order Created SuccessFully", data: order });
+        .json({ message: "Order Created SuccessFully", data: orderData});
     } catch (e) {
       console.log(e);
       next(customErrorHandler.serverError(e));
