@@ -66,6 +66,7 @@ const server = app.listen(PORT, () => {
 global.io = socket(server);
 global.appRoot = path.resolve(__dirname);
 
+
 //initializing the socket io connection 
 io.on("connection", (socket) => {
   console.log('Socket is Connected')
@@ -113,7 +114,7 @@ io.on("connection", (socket) => {
   socket.on("chat", async (value) => {
     //gets the room user and the message sent
     // const pUser = getCurrentUser(socket.id);
-    console.log(value,'socket');
+    console.log(value.text,'socket');
     
 
     if (value._id != undefined) {
@@ -129,22 +130,37 @@ io.on("connection", (socket) => {
         var matches = value.file.match(/^data:([A-Za-z-+\/\.]+);base64,(.+)$/);     
         console.log(matches[1]);
 
-        if(matches[1].includes('image')){
-          fileExt = matches[1].split('/')[1];
-        } else if(matches[1].includes('pdf')){
-          fileExt = matches[1].split('/')[1];
-        }else if(matches[1].includes('ms-excel')){
-          fileExt = 'csv';
-        }else if(matches[1].includes('vnd.openxmlformats-officedocument.wordprocessingml')){
-          fileExt = 'docx';
-        }else if(matches[1].includes('vnd.openxmlformats-officedocument.presentationml')){
-          fileExt = 'pptx';
-        }else if(matches[1].includes('text/plain')){
-          fileExt = 'txt';
-        }
-        else if(matches[1].includes('x-zip-compressed')){
-          fileExt = 'zip';
-        }
+        if (matches[1].includes("image")) {
+          fileExt = matches[1].split("/")[1];
+        } else if (matches[1].includes("pdf")) {
+          fileExt = matches[1].split("/")[1];
+        } else if (matches[1].includes("application/vnd.ms-excel")) {
+          fileExt = "xls";
+        } else if (matches[1].includes("ms-excel")) {
+          fileExt = "csv";
+        } else if (
+          matches[1].includes(
+            "vnd.openxmlformats-officedocument.wordprocessingml"
+          )
+        ) {
+          fileExt = "docx";
+        } else if (
+          matches[1].includes(
+            "vnd.openxmlformats-officedocument.presentationml"
+          )
+        ) {
+          fileExt = "pptx";
+        } else if (matches[1].includes("text/plain")) {
+          fileExt = "txt";
+        } else if (matches[1].includes("x-zip-compressed")) {
+          fileExt = "zip";
+        } else if (
+          matches[1].includes(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          )
+        ) {
+          fileExt = "xlsx";
+        } 
 
         buffer = Buffer.from(matches[2], 'base64');
         filePath = `${Date.now()}-${Math.round(

@@ -4,6 +4,7 @@ import User from "../../models/user";
 import crypto from "crypto";
 import mongoose from "mongoose";
 
+
 const translationController = {
   async addOrder(req, res, next) {
     try {
@@ -82,7 +83,9 @@ const translationController = {
         translationId: order.translationId,
         userId: userData,
       };
-     console.log(order);
+    //  console.log(order);
+    //  io.broadcast.emit("newOrder", orderData);
+     io.emit("newOrder", orderData);
       res
         .status(200)
         .json({ message: "Order Created SuccessFully", data: orderData});
