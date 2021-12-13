@@ -126,7 +126,6 @@ io.on("connection", (socket) => {
       let tempPath;
       
       if (value.file) {
-       
         var matches = value.file.match(/^data:([A-Za-z-+\/\.]+);base64,(.+)$/);     
         console.log(matches[1]);
 
@@ -180,15 +179,18 @@ io.on("connection", (socket) => {
         }
       }
       if(value.orderId){
-        io.to(value._id).emit("orderMessage", {
-          _id: value._id,
-          name: value.sender.name,
-          text: value.text,
-          sender: value.sender,
-          orderId: value.orderId,
-          // translationId: value.translationId,
-          ...(value.file && { file: [tempPath] }),
-        });
+        io.to(value._id)
+          .to(value.receiver)
+          .emit("orderMessage", {
+            _id: value._id,
+            name: value.sender.name,
+            text: value.text,
+            sender: value.sender,
+            orderId: value.orderId,
+            order: value.order ? value.order : {},
+            // translationId: value.translationId,
+            ...(value.file && { file: [tempPath] }),
+          });
       }else{
         io.to(value._id).emit("message", {
           _id: value._id,
@@ -198,13 +200,6 @@ io.on("connection", (socket) => {
           ...(value.file && { file: [tempPath] }),
         });
       }
-      socket.broadcast.emit("userMessage", {
-        _id: value._id,
-        sender: value.sender,
-        orderId: value.orderId ? value.orderId : false,
-        name: value.sender.name,
-        message: `${value.text}`
-      });
       try {
         await Message.create(value.text, value.sender._id, value.sender.role, fileurl, value.receiver, value.orderId);
       } catch(err) {

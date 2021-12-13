@@ -85,7 +85,7 @@ const translationController = {
       };
     //  console.log(order);
     //  io.broadcast.emit("newOrder", orderData);
-     io.emit("newOrder", orderData);
+     io.to("6177e209a7759b0a648e1425").emit("newOrder", orderData);
       res
         .status(200)
         .json({ message: "Order Created SuccessFully", data: orderData});
@@ -287,6 +287,7 @@ const translationController = {
                   $expr: {
                     $and: [
                       { $eq: ["$$id", "$orderId"] },
+                      // { $eq: ["$seen", false] },
                       // { "$messages": { $exists: true, $ne: [] }}
                     ],
                   },
@@ -304,15 +305,15 @@ const translationController = {
         {
           $addFields: {
             unseenMessages: {
-              $size: {
-                $filter: {
-                  input: "$messages",
-                  as: "message",
-                  cond: {
-                    $and: [{ $eq: ["$$message.seen", false] }],
-                  },
+              // $size: {
+              $filter: {
+                input: "$messages",
+                as: "message",
+                cond: {
+                  $and: [{ $eq: ["$$message.seen", false] }],
                 },
               },
+              // },
             },
           },
         },
@@ -336,6 +337,7 @@ const translationController = {
             country: 1,
             createdAt: 1,
             updatedAt: 1,
+            // messages:1
           },
         },
       ]);
@@ -387,7 +389,7 @@ const translationController = {
         {
           $addFields: {
             unseenMessages: {
-              $size: {
+              // $size: {
                 $filter: {
                   input: "$messages",
                   as: "message",
@@ -395,7 +397,7 @@ const translationController = {
                     $eq: ["$$message.seen", false],
                   },
                 },
-              },
+              // },
             },
           },
         },
