@@ -6,11 +6,10 @@ import { customErrorHandler } from "../../errorHandler";
 import User from "../../models/user";
 import fs from 'fs';
 
-
 const userController = {
   async getUsers(req, res, next) {
     const { page, row, user } = req.query;
-    const filter = user ? {role:{$eq: user}}:{role:{$ne: 'admin'}};
+    const filter = user ? { role: { $eq: user } } : { role: { $ne: "admin" } };
     const limit = +(row ? (row < 10 ? 10 : row) : 10);
     const skip = +(page < 0 ? 0 : limit * page);
     try {
@@ -18,11 +17,11 @@ const userController = {
       if (!total) {
         return next(customErrorHandler.wrongCredentials());
       }
-      const users = await User.find(
-        filter,
-        "-password -updatedAt -__v ",
-        { limit, skip, sort:{createdAt: -1}}
-      );
+      const users = await User.find(filter, "-password -updatedAt -__v ", {
+        limit,
+        skip,
+        sort: { createdAt: -1 },
+      });
       if (!users) {
         return next(customErrorHandler.wrongCredentials());
       }
@@ -32,6 +31,57 @@ const userController = {
       return next(customErrorHandler.serverError(err));
     }
   },
+
+  async getUsersWithOrder(req, res, next) {
+    const { page, row, user } = req.query;
+    const filter = user ? { role: { $eq: user } } : { role: { $ne: "admin" } };
+    const limit = +(row ? (row < 10 ? 10 : row) : 10);
+    const skip = +(page < 0 ? 0 : limit * page);
+    try {
+      const total = await User.countDocuments(filter);
+      if (!total) {
+        return next(customErrorHandler.wrongCredentials());
+      }
+      const users = await User.aggregate([
+        { $match: filter },
+        { $limit: limit },
+        { $skip: skip },
+        {
+          $lookup: {
+            from: "translationOrders",
+            localField: "_id",
+            foreignField: "userId",
+            as: "orders",
+            // pipeline: [],
+          },
+        },
+        {
+          $addFields: {
+            orders: { $size: "$orders" },
+            image: { $concat: [SERVER_Path, "/", "$image"] },
+          },
+        },
+        {
+          $project: {
+            name: 1,
+            email: 1,
+            image: 1,
+            country: 1,
+            phone: 1,
+            orders: 1,
+          },
+        },
+      ]);
+      if (!users) {
+        return next(customErrorHandler.wrongCredentials());
+      }
+      res.status(200).json({ data: users, total });
+    } catch (err) {
+      console.log(err);
+      return next(customErrorHandler.serverError(err));
+    }
+  },
+
   async getUser(req, res, next) {
     const { authorization } = req.headers;
     if (authorization) {
@@ -213,7 +263,6 @@ const userController = {
       return next(customErrorHandler.serverError(err));
     }
   },
-  
 };
 
 export default userController  

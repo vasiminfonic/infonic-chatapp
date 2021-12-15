@@ -1,6 +1,7 @@
 import express from "express";
 import { loginController, messageController, orderController, userController } from "../controllers";
 import mainOrderController from "../controllers/mainOrderController";
+import NotificationController from "../controllers/notificationController/notificationController";
 import translationController from "../controllers/translationController";
 import middle from '../middlewares'
 
@@ -22,6 +23,8 @@ router.get('/users', userController.getUsers);
 router.get('/admin',userController.getAdmin );
 router.get('/user/name/:search',userController.getUserSearch);
 router.get('/user/messages/:id', userController.getUserMessages);
+router.get("/users/order", userController.getUsersWithOrder);
+
 
 
 
@@ -55,7 +58,7 @@ router.put(
   translationController.updateOrder
 );
 router.get(
-  "/translation/chat-order",
+  "/translation/chat-order/admin/:id",
   translationController.getChatsOrder
 );
 router.get("/translation/chat-order/:id", translationController.getUserChatsOrder);
@@ -68,6 +71,8 @@ router.get(
 );
 
 
+router.get("/notification/:id", NotificationController.getNotifications);
+router.get("/notification/seen/:id", NotificationController.setSeenNotification);
 
 
 

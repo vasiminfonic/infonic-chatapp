@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-import { SERVER_Path } from "../config";
 
 const notificationSchema = new mongoose.Schema(
   {
+    notification: {type: String, require: false},
     type: { type:String, required: true },
-    userid: { type: mongoose.Schema.Types.ObjectId, required:true },
+    userId: { type: mongoose.Schema.Types.ObjectId, required:true, index: true },
     seen: {type: Boolean, default: false},
-    infoId:{type: mongoose.Schema.Types.ObjectId, required: true },
+    info:{type: Object, required: true },
   },
   { timestamps: true, toJSON: { getters: true }, id: false }
 );

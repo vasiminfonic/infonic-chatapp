@@ -104,11 +104,6 @@ io.on("connection", (socket) => {
         users
       })
   })
-  socket.on('orderSubmit',(data)=>{
-    const order = data
-    console.log(data);
-    socket.broadcast.emit('newOrder',order);
-  })
 
   //user sending message
   socket.on("chat", async (value) => {
@@ -188,7 +183,6 @@ io.on("connection", (socket) => {
             sender: value.sender,
             orderId: value.orderId,
             order: value.order ? value.order : {},
-            // translationId: value.translationId,
             ...(value.file && { file: [tempPath] }),
           });
       }else{

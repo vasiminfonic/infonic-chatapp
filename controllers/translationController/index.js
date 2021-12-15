@@ -3,6 +3,7 @@ import { customErrorHandler } from "../../errorHandler";
 import User from "../../models/user";
 import crypto from "crypto";
 import mongoose from "mongoose";
+import Notification from "../../models/notification";
 
 
 const translationController = {
@@ -80,12 +81,43 @@ const translationController = {
         deadline: order.deadline,
         country: order.country,
         status: order.status,
+        ...(order.files.length && { files: order.files }),
         translationId: order.translationId,
         userId: userData,
       };
-    //  console.log(order);
-    //  io.broadcast.emit("newOrder", orderData);
-     io.to("6177e209a7759b0a648e1425").emit("newOrder", orderData);
+      let admin;
+      try {
+        admin = await User.findOne({role: 'admin'},'-password -updatedAt -__v')
+        if(!admin){
+          return next(customErrorHandler.serverError('admin Not found'))
+        }
+      } catch (er) {
+        console.log(er);
+        return next(customErrorHandler.serverError())
+      }
+     
+      try {
+       const notification = await Notification.create(
+         {
+           notification: "new order received",
+           type: "order",
+           userId: admin._id,
+           info: orderData,
+         },
+         {
+           notification: "your order received",
+           type: "order",
+           userId: user._id,
+           info: orderData,
+         }
+       );
+      io.to(admin._id.toString()).emit("notification", notification[0]);
+      io.to(user._id.toString()).emit("notification", notification[1]);
+
+      } catch (err) {
+         console.log(err);
+         next(customErrorHandler.serverError(err));
+      }
       res
         .status(200)
         .json({ message: "Order Created SuccessFully", data: orderData});
@@ -270,10 +302,7 @@ const translationController = {
     }
   },
   async getChatsOrder(req, res, next) {
-    const { translation } = req.query;
-    const fTrans = translation
-      ? { translationId: { $regex: translation, $options: "i" } }
-      : {};  
+    const { id } = req.params;  
     try {
       const data = await TranslationOrder.aggregate([
         {
@@ -299,7 +328,7 @@ const translationController = {
         { $sort: { createdAt: -1 } },
         {
           $match: {
-            $and: [{ messages: { $exists: true, $not: { $size: 0 } } }, fTrans],
+            $and: [{ messages: { $exists: true, $not: { $size: 0 } } }],
           },
         },
         {
@@ -310,13 +339,17 @@ const translationController = {
                 input: "$messages",
                 as: "message",
                 cond: {
-                  $and: [{ $eq: ["$$message.seen", false] }],
+                  $and: [
+                    { $eq: ["$$message.seen", false] },
+                    { $eq: ["$$message.receiver", mongoose.Types.ObjectId(id)]},
+                  ],
                 },
               },
               // },
             },
           },
         },
+        { $limit: 20 },
         {
           $project: {
             _id: 1,
@@ -368,7 +401,7 @@ const translationController = {
                     $and: [
                       { $eq: ["$$id", "$orderId"] },
                       // { "$messages": { $exists: true, $ne: [] }}
-                      { $eq: ["$receiver", mongoose.Types.ObjectId(id)] },
+                      { $eq: ["$receiver", mongoose.Types.ObjectId(id)]},
                     ],
                   },
                 },
@@ -390,17 +423,18 @@ const translationController = {
           $addFields: {
             unseenMessages: {
               // $size: {
-                $filter: {
-                  input: "$messages",
-                  as: "message",
-                  cond: {
-                    $eq: ["$$message.seen", false],
-                  },
+              $filter: {
+                input: "$messages",
+                as: "message",
+                cond: {
+                  $eq: ["$$message.seen", false],
                 },
+              },
               // },
             },
           },
         },
+        { $limit: 20 },
         {
           $project: {
             _id: 1,
