@@ -303,6 +303,10 @@ const translationController = {
   },
   async getChatsOrder(req, res, next) {
     const { id } = req.params;  
+    const { translation } = req.query;
+    const fTrans = translation
+      ? { translationId: { $regex: translation, $options: "i" } }
+      : {};
     try {
       const data = await TranslationOrder.aggregate([
         {
@@ -328,7 +332,7 @@ const translationController = {
         { $sort: { createdAt: -1 } },
         {
           $match: {
-            $and: [{ messages: { $exists: true, $not: { $size: 0 } } }],
+            $and: [{ messages: { $exists: true, $not: { $size: 0 } } },fTrans],
           },
         },
         {
@@ -370,7 +374,6 @@ const translationController = {
             country: 1,
             createdAt: 1,
             updatedAt: 1,
-            // messages:1
           },
         },
       ]);
