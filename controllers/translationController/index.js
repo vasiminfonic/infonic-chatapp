@@ -4,6 +4,7 @@ import User from "../../models/user";
 import crypto from "crypto";
 import mongoose from "mongoose";
 import Notification from "../../models/notification";
+import { SERVER_Path } from "../../config";
 
 
 const translationController = {
@@ -81,11 +82,15 @@ const translationController = {
         deadline: order.deadline,
         country: order.country,
         status: order.status,
-        ...(order.files.length && { files: order.files }),
+        ...(order.files.length && { files: filesUrl.map(e=>`${SERVER_Path}/${e}`) }),
         translationId: order.translationId,
         userId: userData,
       };
       let admin;
+      console.log(filesUrl, 'FilesUres');
+      console.log(order.files, "FilesOrder");
+      console.log(orderData.files, "FilesOrderMain");
+
       try {
         admin = await User.findOne({role: 'admin'},'-password -updatedAt -__v')
         if(!admin){
@@ -111,9 +116,8 @@ const translationController = {
            info: orderData,
          }
        );
-      io.to(admin._id.toString()).emit("notification", notification[0]);
-      io.to(user._id.toString()).emit("notification", notification[1]);
-
+      io.in(admin._id.toString()).emit("notification", notification[0]);
+      io.in(user._id.toString()).emit("notification", notification[1]);
       } catch (err) {
          console.log(err);
          next(customErrorHandler.serverError(err));

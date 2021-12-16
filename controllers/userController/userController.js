@@ -69,6 +69,7 @@ const userController = {
             country: 1,
             phone: 1,
             orders: 1,
+            createdAt: 1,
           },
         },
       ]);

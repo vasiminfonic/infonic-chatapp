@@ -174,8 +174,8 @@ io.on("connection", (socket) => {
         }
       }
       if(value.orderId){
-        io.to(value._id)
-          .to(value.receiver)
+        io.in(value._id)
+          .in(value.receiver)
           .emit("orderMessage", {
             _id: value._id,
             name: value.sender.name,
