@@ -5,7 +5,7 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 import Notification from "../../models/notification";
 import { SERVER_Path } from "../../config";
-
+import emailService from "../../services/emailService";
 
 const translationController = {
   async addOrder(req, res, next) {
@@ -24,7 +24,6 @@ const translationController = {
         message,
         notarization,
         deadline,
-        status,
       } = req.body;
       let user;
       try {
@@ -38,6 +37,9 @@ const translationController = {
             country,
             phone,
           });
+          await emailService.sendMailNewUser(user);
+        } else {
+          await emailService.sendMailExistUser(user);
         }
       } catch (err) {
         console.log(err);
@@ -57,7 +59,6 @@ const translationController = {
         websiteId,
         deadline,
         country,
-        status,
         ...(filesUrl.length && { files: filesUrl }),
       });
       if (!order) {
@@ -66,9 +67,9 @@ const translationController = {
       const userData = {
         _id: user._id,
         name: user.name,
-        email:user.email,
-        image: user.image ? user.image : '',
-      }
+        email: user.email,
+        image: user.image ? user.image : "",
+      };
       const orderData = {
         _id: order._id,
         phone: order.phone,
@@ -82,49 +83,56 @@ const translationController = {
         deadline: order.deadline,
         country: order.country,
         status: order.status,
-        ...(order.files.length && { files: filesUrl.map(e=>`${SERVER_Path}/${e}`) }),
+        ...(order.files.length && {
+          files: filesUrl.map((e) => `${SERVER_Path}/${e}`),
+        }),
         translationId: order.translationId,
         userId: userData,
       };
       let admin;
-      console.log(filesUrl, 'FilesUres');
-      console.log(order.files, "FilesOrder");
-      console.log(orderData.files, "FilesOrderMain");
-
+      
+      await emailService.sendMailNewOrder(orderData);
       try {
-        admin = await User.findOne({role: 'admin'},'-password -updatedAt -__v')
-        if(!admin){
-          return next(customErrorHandler.serverError('admin Not found'))
+        admin = await User.findOne(
+          { role: "admin" },
+          "-password -updatedAt -__v"
+        );
+        if (!admin) {
+          return next(customErrorHandler.serverError("admin Not found"));
         }
       } catch (er) {
         console.log(er);
-        return next(customErrorHandler.serverError())
+        return next(customErrorHandler.serverError());
       }
-     
+
       try {
-       const notification = await Notification.create(
-         {
-           notification: "new order received",
-           type: "order",
-           userId: admin._id,
-           info: orderData,
-         },
-         {
-           notification: "your order received",
-           type: "order",
-           userId: user._id,
-           info: orderData,
-         }
-       );
-      io.sockets.in(admin._id.toString()).emit("notification", notification[0]);
-      io.sockets.in(user._id.toString()).emit("notification", notification[1]);
+        const notification = await Notification.create(
+          {
+            notification: "new order received",
+            type: "order",
+            userId: admin._id,
+            info: orderData,
+          },
+          {
+            notification: "your order received",
+            type: "order",
+            userId: user._id,
+            info: orderData,
+          }
+        );
+        io.sockets
+          .in(admin._id.toString())
+          .emit("notification", notification[0]);
+        io.sockets
+          .in(user._id.toString())
+          .emit("notification", notification[1]);
       } catch (err) {
-         console.log(err);
-         next(customErrorHandler.serverError(err));
+        console.log(err);
+        next(customErrorHandler.serverError(err));
       }
       res
         .status(200)
-        .json({ message: "Order Created SuccessFully", data: orderData});
+        .json({ message: "Order Created SuccessFully", data: orderData });
     } catch (e) {
       console.log(e);
       next(customErrorHandler.serverError(e));
@@ -199,9 +207,7 @@ const translationController = {
     const ids = translation
       ? { translationId: { $regex: translation, $options: "i" } }
       : {};
-    const dead = deadline
-      ? { deadline: new Date(deadline)}
-      : {};
+    const dead = deadline ? { deadline: new Date(deadline) } : {};
     try {
       const count = await TranslationOrder.countDocuments({
         $and: [{ userId: id }, con, sub, ids, dead],
@@ -236,7 +242,7 @@ const translationController = {
     const ids = translation
       ? { translationId: { $regex: translation, $options: "i" } }
       : {};
-     const dead = deadline ? { deadline: new Date(deadline) } : {};
+    const dead = deadline ? { deadline: new Date(deadline) } : {};
     try {
       const count = await TranslationOrder.countDocuments({
         $and: [con, sub, ids, dead],
@@ -306,7 +312,7 @@ const translationController = {
     }
   },
   async getChatsOrder(req, res, next) {
-    const { id } = req.params;  
+    const { id } = req.params;
     const { translation } = req.query;
     const fTrans = translation
       ? { translationId: { $regex: translation, $options: "i" } }
@@ -326,6 +332,12 @@ const translationController = {
                       { $eq: ["$$id", "$orderId"] },
                       // { $eq: ["$seen", false] },
                       // { "$messages": { $exists: true, $ne: [] }}
+                      {
+                        $or: [
+                          { $eq: ["$receiver", mongoose.Types.ObjectId(id)] },
+                          { $eq: ["$sender", mongoose.Types.ObjectId(id)] },
+                        ],
+                      },
                     ],
                   },
                 },
@@ -336,7 +348,7 @@ const translationController = {
         { $sort: { createdAt: -1 } },
         {
           $match: {
-            $and: [{ messages: { $exists: true, $not: { $size: 0 } } },fTrans],
+            $and: [{ messages: { $exists: true, $not: { $size: 0 } } }, fTrans],
           },
         },
         {
@@ -349,7 +361,9 @@ const translationController = {
                 cond: {
                   $and: [
                     { $eq: ["$$message.seen", false] },
-                    { $eq: ["$$message.receiver", mongoose.Types.ObjectId(id)]},
+                    {
+                      $eq: ["$$message.receiver", mongoose.Types.ObjectId(id)],
+                    },
                   ],
                 },
               },
@@ -393,7 +407,9 @@ const translationController = {
   async getUserChatsOrder(req, res, next) {
     const { id } = req.params;
     const { translation } = req.query;
-    const fTrans = translation ? {translationId: {$regex: translation, $options: 'i'}}: {};  
+    const fTrans = translation
+      ? { translationId: { $regex: translation, $options: "i" } }
+      : {};
     try {
       const data = await TranslationOrder.aggregate([
         {
@@ -408,7 +424,12 @@ const translationController = {
                     $and: [
                       { $eq: ["$$id", "$orderId"] },
                       // { "$messages": { $exists: true, $ne: [] }}
-                      { $eq: ["$receiver", mongoose.Types.ObjectId(id)]},
+                      {
+                        $or: [
+                          { $eq: ["$receiver", mongoose.Types.ObjectId(id)] },
+                          { $eq: ["$sender", mongoose.Types.ObjectId(id)] },
+                        ],
+                      },
                     ],
                   },
                 },
@@ -434,7 +455,12 @@ const translationController = {
                 input: "$messages",
                 as: "message",
                 cond: {
-                  $eq: ["$$message.seen", false],
+                  $and: [
+                    { $eq: ["$$message.seen", false] },
+                    {
+                      $eq: ["$$message.receiver", mongoose.Types.ObjectId(id)],
+                    },
+                  ],
                 },
               },
               // },

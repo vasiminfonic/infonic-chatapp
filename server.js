@@ -76,19 +76,12 @@ io.on("connection", (socket) => {
     //* create user
     const pUser = joinUser(socket.id, sender, _id);
     console.log(socket.id, "=id");
-
-    socket.join(pUser.room);
+    const isInRoom = socket.rooms.has(_id);
+    if(isInRoom)return
+    console.log(isInRoom,'this is rooms');
+    socket.join(_id);
    
 
-    //display a welcome message to the user who have joined a room
-  //   if(pUser.user){
-  //   socket.emit("message", {
-  //     _id: _id,
-  //     name: pUser.user.name,
-  //     text: `Welcome ${pUser.user.name}`,
-  //     type: pUser.user.role
-  //   });
-  //   //displays a joined room message to all other room users except that particular user
     socket.broadcast.emit("userJoin", {
       _id: pUser.sender._id,
       name: pUser.sender.name,
