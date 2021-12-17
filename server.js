@@ -174,7 +174,7 @@ io.on("connection", (socket) => {
         }
       }
       if(value.orderId){
-        io.in(value._id)
+        io.sockets.in(value._id)
           .in(value.receiver)
           .emit("orderMessage", {
             _id: value._id,
@@ -186,7 +186,7 @@ io.on("connection", (socket) => {
             ...(value.file && { file: [tempPath] }),
           });
       }else{
-        io.to(value._id).emit("message", {
+        io.sockets.in(value._id).emit("message", {
           _id: value._id,
           name: value.sender.name,
           text: value.text,

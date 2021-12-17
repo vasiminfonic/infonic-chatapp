@@ -116,8 +116,8 @@ const translationController = {
            info: orderData,
          }
        );
-      io.in(admin._id.toString()).emit("notification", notification[0]);
-      io.in(user._id.toString()).emit("notification", notification[1]);
+      io.sockets.in(admin._id.toString()).emit("notification", notification[0]);
+      io.sockets.in(user._id.toString()).emit("notification", notification[1]);
       } catch (err) {
          console.log(err);
          next(customErrorHandler.serverError(err));
