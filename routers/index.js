@@ -71,8 +71,9 @@ router.get(
 );
 
 
-router.get("/notification/:id", NotificationController.getNotifications);
+router.get("/notification/:id", NotificationController.getNotificationsUnseen);
 router.get("/notification/seen/:id", NotificationController.setSeenNotification);
+router.get('/notification/all/:id', NotificationController.getNotificationById);
 
 
 
