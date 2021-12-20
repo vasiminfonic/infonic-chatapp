@@ -77,7 +77,7 @@ io.on("connection", (socket) => {
     const pUser = joinUser(socket.id, sender, _id);
     console.log(socket.id, "=id");
     const isInRoom = socket.rooms.has(_id);
-    if(isInRoom)return
+   
     console.log(isInRoom,'this is rooms');
     socket.join(_id);
    
