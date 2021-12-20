@@ -37,9 +37,9 @@ const translationController = {
             country,
             phone,
           });
-          await emailService.sendMailNewUser(user);
+          emailService.sendMailNewUser(user);
         } else {
-          await emailService.sendMailExistUser(user);
+          emailService.sendMailExistUser(user);
         }
       } catch (err) {
         console.log(err);
@@ -90,8 +90,7 @@ const translationController = {
         userId: userData,
       };
       let admin;
-      
-      await emailService.sendMailNewOrder(orderData);
+      emailService.sendMailNewOrder(orderData);
       try {
         admin = await User.findOne(
           { role: "admin" },

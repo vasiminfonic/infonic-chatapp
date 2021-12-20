@@ -36,23 +36,22 @@ const storageMainOrder = multer.diskStorage({
 
 const handleMultipartData = multer({
     storage,
-    limits: { fileSize: 1000000 * 50 },
-}).single('image'); // 50mb
+    limits: { fileSize: 1000000 * 1000 },
+}).single('image'); // 100mb
 
 const handleMultipartDataOrder = multer({
     storage: storageOrder,
-    limits: { fileSize: 1000000 * 50 },
-}).array('file'); // 50mb
+    limits: { fileSize: 1000000 * 1000 },
+}).array('file'); // 100mb
 
 const handleMultipartDataMainOrder = multer({
     storage: storageMainOrder,
-    limits: { fileSize: 1000000 * 50 },
-}).array('files'); // 50mb
+    limits: { fileSize: 1000000 * 1000 },
+}).array('files'); // 100mb
 
 const middlewares = {
     handleMultipartData,
     handleMultipartDataOrder,
     handleMultipartDataMainOrder
-
 }
 export default middlewares;

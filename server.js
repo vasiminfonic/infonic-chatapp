@@ -63,7 +63,7 @@ const server = app.listen(PORT, () => {
 
 
 
-global.io = socket(server);
+global.io = socket(server,{  maxHttpBufferSize: 1e9});
 global.appRoot = path.resolve(__dirname);
 
 
@@ -103,7 +103,9 @@ io.on("connection", (socket) => {
     //gets the room user and the message sent
     // const pUser = getCurrentUser(socket.id);
     console.log(value.text,'socket');
-    
+    if(!socket.rooms.has(value._id)){
+      socket.join(value._id);
+    };
 
     if (value._id != undefined) {
       // let message = await Message.Schema.statics.create(msg);
@@ -141,6 +143,10 @@ io.on("connection", (socket) => {
           fileExt = "txt";
         } else if (matches[1].includes("x-zip-compressed")) {
           fileExt = "zip";
+        } else if (matches[1].includes("application/zip")) {
+          fileExt = "zip";
+        } else if (matches[1].includes("application/octet-stream")) {
+          fileExt = "rar";
         } else if (
           matches[1].includes(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -148,6 +154,10 @@ io.on("connection", (socket) => {
         ) {
           fileExt = "xlsx";
         } 
+        if(!fileExt){
+          console.log('fileError')
+          return socket.emit('fileError',{message: 'File type invalid'})
+        }
 
         buffer = Buffer.from(matches[2], 'base64');
         filePath = `${Date.now()}-${Math.round(
@@ -194,7 +204,7 @@ io.on("connection", (socket) => {
       }
     // const roommate = getCurrentRoom(value._id);
     const { empty } = checkRoom(value._id);
-    console.log(empty, 'checkfdkljasd');
+    console.log(empty, 'client number of room');
 
     if(empty ==='admin' || empty === 'user'){
       const emailId = empty === 'admin' ? '' : value._id 
