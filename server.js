@@ -217,33 +217,32 @@ io.on("connection", (socket) => {
       const { empty } = checkRoom(value._id);
       console.log(empty, "client number of room");
 
-      if (empty === "admin" || empty === "user") {
-        const emailId = empty === "admin" ? "" : value._id;
+      // if (empty === "admin" || empty === "user") {
+      //   const emailId = empty === "admin" ? "" : value._id;
 
-        let transporter = nodemailer.createTransport({
-          host: "smtp.gmail.com",
-          port: 465,
-          secure: true, // true for 465, false for other ports
-          auth: {
-            user: "vasim.infonic@gmail.com", // generated ethereal user
-            pass: "qiwpdofprhvkeevk", // generated ethereal password
-          },
-        });
-        let info = await transporter.sendMail({
-          from: "vasim.infonic@gmail.com", // sender address
-          to: "vasim.infonic@gmail.com", // list of receivers
-          subject: "new Message from infonic", // Subject line
-          text: value.text, // plain text body
-          html: `<b>Hello world<br>${value.text}</b>`, // html body
-        });
-        console.log(info);
-      }
+      //   let transporter = nodemailer.createTransport({
+      //     host: "smtp.gmail.com",
+      //     port: 465,
+      //     secure: true, // true for 465, false for other ports
+      //     auth: {
+      //       user: "vasim.infonic@gmail.com", // generated ethereal user
+      //       pass: "qiwpdofprhvkeevk", // generated ethereal password
+      //     },
+      //   });
+      //   let info = await transporter.sendMail({
+      //     from: "vasim.infonic@gmail.com", // sender address
+      //     to: "vasim.infonic@gmail.com", // list of receivers
+      //     subject: "new Message from infonic", // Subject line
+      //     text: value.text, // plain text body
+      //     html: `<b>Hello world<br>${value.text}</b>`, // html body
+      //   });
+      //   console.log(info);
+      // }
     }
   });
 
   socket.on("disconnect", () => {
     //the user is deleted from array of users and a left room message displayed
-
     const dUser = userDisconnect(socket.id);
     console.log(dUser, "disconnected");
     if (dUser) {
