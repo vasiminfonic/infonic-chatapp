@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { SERVER_Path, EMAIL_KEY } from "../config";
+import User from "../models/user";
 
 class EmailService {
   constructor() {
@@ -63,6 +64,18 @@ class EmailService {
     });
     return info;
   }
+  async setMailToOfflineUser(id, text){
+    const user = await User.findById(id);
+     let info = await this.transporter.sendMail({
+          from: this.from, // sender address
+          to: user.email, // list of receivers
+          subject: "new Message from infonic", // Subject line
+          text: text, // plain text body
+          html: `<b>Message from Singapore translators sent by website <br>${value.text}</b>`, // html body
+        });
+        return info;
+  }
+
   
 }
 

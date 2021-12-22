@@ -20,6 +20,7 @@ import {
   totalOnlineUsers,
 } from "./socketUsers";
 import Message from "./models/message";
+import emailService from "./services/emailService";
 
 // import socketIo from "./socketIo";
 
@@ -72,7 +73,7 @@ io.on("connection", (socket) => {
     console.log(socket.id, "=id");
     const isInRoom = socket.rooms.has(_id);
 
-    console.log(isInRoom, "this is rooms");
+    console.log(isInRoom,`this is rooms: ${_id}`);
     socket.join(_id);
 
     socket.broadcast.emit("userJoin", {
@@ -214,31 +215,26 @@ io.on("connection", (socket) => {
         console.log(err);
       }
       // const roommate = getCurrentRoom(value._id);
-      const { empty } = checkRoom(value._id);
-      console.log(empty, "client number of room");
+      const clientsInRoom = io.sockets.adapter.rooms.get(value.receiver);
+      if(clientsInRoom){
+        if(clientsInRoom.size){
+          console.log(clientsInRoom.size, `${value.receiver} room size is ${clientsInRoom.size}`)
+        }
+      }else{
+        console.log(`${value.receiver} room is empty`)
+      }
+      console.log(clientsInRoom,'ClientInRoom')
 
-      // if (empty === "admin" || empty === "user") {
-      //   const emailId = empty === "admin" ? "" : value._id;
-
-      //   let transporter = nodemailer.createTransport({
-      //     host: "smtp.gmail.com",
-      //     port: 465,
-      //     secure: true, // true for 465, false for other ports
-      //     auth: {
-      //       user: "vasim.infonic@gmail.com", // generated ethereal user
-      //       pass: "qiwpdofprhvkeevk", // generated ethereal password
-      //     },
-      //   });
-      //   let info = await transporter.sendMail({
-      //     from: "vasim.infonic@gmail.com", // sender address
-      //     to: "vasim.infonic@gmail.com", // list of receivers
-      //     subject: "new Message from infonic", // Subject line
-      //     text: value.text, // plain text body
-      //     html: `<b>Hello world<br>${value.text}</b>`, // html body
-      //   });
-      //   console.log(info);
+      // if (!isInRoom) {
+      //   console.log(isInRoom, "client is in the room!");
+      //   // emailService.setMailToOfflineUser(value.receiver, value.text);
       // }
     }
+  });
+  socket.on("forceDisconnect", (id) =>{
+    socket.disconnect(true);
+    socket.leave(id);
+    console.log(`${id} left room`);
   });
 
   socket.on("disconnect", () => {
