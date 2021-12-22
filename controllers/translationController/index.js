@@ -129,9 +129,15 @@ const translationController = {
         console.log(err);
         next(customErrorHandler.serverError(err));
       }
-      res
-        .status(200)
+    const { authorization } = req.headers;
+    if(authorization){
+      return res.status(200)
         .json({ message: "Order Created SuccessFully", data: orderData });
+    }else{
+       res.redirect(
+         `https://www.singaporetranslators.com/thanks?id=${orderData.translationId}&email=${user.email}`
+       );
+    }
     } catch (e) {
       console.log(e);
       next(customErrorHandler.serverError(e));

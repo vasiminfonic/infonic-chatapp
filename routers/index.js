@@ -4,6 +4,7 @@ import mainOrderController from "../controllers/mainOrderController";
 import NotificationController from "../controllers/notificationController/notificationController";
 import translationController from "../controllers/translationController";
 import middle from '../middlewares'
+import authMiddleware from "../middlewares/authMiddleware";
 
 
 
@@ -36,7 +37,7 @@ router.get('/orders/user/:id', orderController.getOrdersofUser);
 
 
 router.post('/mainorder',middle.handleMultipartDataMainOrder ,mainOrderController.addOrder);
-router.get('/mainorder', mainOrderController.getOrders)
+router.get('/mainorder' ,mainOrderController.getOrders)
 router.put(
   "/mainorder/:id",
   middle.handleMultipartDataMainOrder,
@@ -51,7 +52,7 @@ router.post(
   middle.handleMultipartDataMainOrder,
   translationController.addOrder
 );
-router.get("/translation", translationController.getOrders);
+router.get("/translation", authMiddleware.checkAuth, translationController.getOrders);
 router.put(
   "/translation/:id",
   middle.handleMultipartDataMainOrder,
@@ -69,6 +70,7 @@ router.get(
   "/translation/filter/order",
   translationController.getOrdersofAdimnSearch
 );
+
 
 
 router.get("/notification/:id", NotificationController.getNotificationsUnseen);

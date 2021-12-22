@@ -3,7 +3,7 @@ import { SERVER_Path } from "../config";
 
 const userSchema = new mongoose.Schema({
     name: {type: String, required: true, index: true},
-    email: {type: String, required: true, unique: true},
+    email: {type: String, required: true, unique: true, index: true},
     phone: {type: String, required: false},
     country: {type: String, required: false},
     password: {type: String, required: true},

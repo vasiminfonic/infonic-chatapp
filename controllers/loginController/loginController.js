@@ -156,7 +156,7 @@ const loginController = {
       const reqtoken = authorization.split(" ")[1];
 
       try {
-        const { data: { _id } = {} } = jwt.verify(reqtoken, JWTSTRING);
+        const { data: { _id, role } = {}, } = jwt.verify(reqtoken, JWTSTRING);
         console.log(_id);
         if (!_id) {
           return next(customErrorHandler.serverError('invalid token'));
