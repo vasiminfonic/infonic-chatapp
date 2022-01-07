@@ -1,8 +1,7 @@
-
-import path from 'path';
+import path from "path";
 import { customErrorHandler } from "../../errorHandler";
 import Message from "../../models/message";
-import User from '../../models/user';
+import User from "../../models/user";
 
 const messageController = {
   async getMessages(req, res, next) {
@@ -145,6 +144,59 @@ const messageController = {
       return next(customErrorHandler.serverError());
     }
   },
+  async getOrderMessagesByDate(req, res, next) {
+    let { id } = req.params;
+    let {startDate, endDate, page, row} = req.query;
+    const limit = +(row ? (row < 10 ? 10 : row) : 10);
+    const skip = +(page < 0 ? 0 : limit * page);
+   
+    if (!startDate) {
+      startDate = Date.now() - 1000 * 60 * 60 * 24;
+    }
+    if (!endDate) {
+      endDate = Date.now();
+    }
+    try {
+      const total = await Message.countDocuments({
+        $and: [
+          { receiver: { $eq: id } },
+          {
+            createdAt: {
+              $gte: new Date(new Date(startDate).setHours(0)),
+              $lte: new Date(new Date(endDate).setHours(23, 59, 59)),
+            },
+          },
+        ],
+      });
+
+      const messages = await Message.find(
+        {
+          $and: [
+            { receiver: { $eq: id } },
+            {
+              createdAt: {
+                $gte: new Date(new Date(startDate).setHours(0)),
+                $lte: new Date(new Date(endDate).setHours(23, 59, 59)),
+              },
+            },
+          ],
+        },
+        "-__v -updatedAt"
+      )
+        .populate({path: 'orderId', populate:{path: 'userId', select:'name email image'}})
+        // .populate("sender", "name email image")
+        .sort({ createdAt: -1 }).skip(skip).limit(limit)
+        // .limit(10);
+      if (!messages) {
+        return next(customErrorHandler.serverError());
+      }
+      res.status(200).json({ data: messages, total });
+    } catch (err) {
+      console.log(err);
+      return next(customErrorHandler.serverError());
+    }
+  },
+
   async setSeenOrderMessage(req, res, next) {
     const { id } = req.params;
     try {

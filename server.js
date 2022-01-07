@@ -8,7 +8,7 @@ import nodemailer from "nodemailer";
 // import {fileTypeFromBuffer} from 'file-type';
 // import {readChunk} from 'read-chunk';
 
-import { PORT, MONGODB_URL, SERVER_Path } from "./config";
+import { PORT, MONGODB_URL, SERVER_Path } from "./config/index.js";
 import { errorHandler } from "./errorHandler";
 import router from "./routers";
 import {

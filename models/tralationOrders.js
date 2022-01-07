@@ -22,7 +22,7 @@ const translationSchema = new mongoose.Schema(
     certification: { type: String, required: true },
     message: { type: String, required: false },
     notarization: { type: String, required: false },
-    status: { type: String, required: false, default: "Requested" },
+    status: { type: String, required: false, default: "new" },
     files: [
       {
         type: String,

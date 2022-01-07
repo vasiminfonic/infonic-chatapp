@@ -58,6 +58,12 @@ router.put(
   middle.handleMultipartDataMainOrder,
   translationController.updateOrder
 );
+
+router.put(
+  "/translation/status/:id",
+  translationController.changeStatus
+);
+
 router.get(
   "/translation/chat-order/admin/:id",
   translationController.getChatsOrder
@@ -69,6 +75,10 @@ router.get("/translation/filter/user/:id", translationController.getOrdersofUser
 router.get(
   "/translation/filter/order",
   translationController.getOrdersofAdimnSearch
+);
+router.get(
+  "/translation/await/:id",
+  translationController.getOrdersByAwait
 );
 
 
@@ -87,7 +97,9 @@ router.get('/message/seen/:id', messageController.setSeenMessage)
 router.get('/message/unseen/:id', messageController.unseenMessage)
 router.get('/message/unseen/user/:id', messageController.unseenUserMessage);
 router.get("/message/unseen/order/:id", messageController.setSeenOrderMessage);
-router.get('/message/order/:id', messageController.getOrderMessages)
+router.get('/message/order/:id', messageController.getOrderMessages);
+router.get("/message/filter/:id", messageController.getOrderMessagesByDate);
+
 
 
 

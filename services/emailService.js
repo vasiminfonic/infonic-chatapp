@@ -64,19 +64,27 @@ class EmailService {
     });
     return info;
   }
-  async setMailToOfflineUser(id, text){
+  async setMailToOfflineUser(id, text) {
     const user = await User.findById(id);
-     let info = await this.transporter.sendMail({
-          from: this.from, // sender address
-          to: user.email, // list of receivers
-          subject: "new Message from infonic", // Subject line
-          text: text, // plain text body
-          html: `<b>Message from Singapore translators sent by website <br>${value.text}</b>`, // html body
-        });
-        return info;
+    let info = await this.transporter.sendMail({
+      from: this.from, // sender address
+      to: user.email, // list of receivers
+      subject: "new Message from infonic", // Subject line
+      text: text, // plain text body
+      html: `<b>Message from Singapore translators sent by website <br>${value.text}</b>`, // html body
+    });
+    return info;
   }
-
-  
+  async awaitEMail(user, values) {
+    let info = await this.transporter.sendMail({
+      from: this.from, // sender address
+      to: user.email, // list of receivers
+      subject: values.subject, // Subject line
+      text: "Message from Singapore translators", // plain text body
+      html: `<b>Message from Singapore translators<br>${values.message}</b>`, // html body
+    });
+    return info;
+  }
 }
 
 export default new EmailService();

@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import Notification from "../../models/notification";
 import { SERVER_Path } from "../../config";
 import emailService from "../../services/emailService";
+import Message from "../../models/message";
 
 const translationController = {
   async addOrder(req, res, next) {
@@ -129,27 +130,28 @@ const translationController = {
         console.log(err);
         next(customErrorHandler.serverError(err));
       }
-    const { authorization } = req.headers;
-    if(authorization){
-      return res.status(200)
-        .json({ message: "Order Created SuccessFully", data: orderData });
-    }else{
-       res.redirect(
-         `https://www.singaporetranslators.com/thanks?id=${orderData.translationId}&email=${user.email}`
-       );
-    }
+      const { authorization } = req.headers;
+      if (authorization) {
+        return res
+          .status(200)
+          .json({ message: "Order Created SuccessFully", data: orderData });
+      } else {
+        res.redirect(
+          `https://www.singaporetranslators.com/thanks?id=${orderData.translationId}&email=${user.email}`
+        );
+      }
     } catch (e) {
       console.log(e);
       next(customErrorHandler.serverError(e));
     }
   },
   async getOrders(req, res, next) {
-    const { page, row } = req.query;
+    const { page, row, status = "new" } = req.query;
     const limit = +(row ? (row < 5 ? 5 : row) : 5);
     const skip = +(page < 0 ? 0 : limit * page);
     try {
-      const count = await TranslationOrder.countDocuments({});
-      const orders = await TranslationOrder.find({}, null, {
+      const count = await TranslationOrder.countDocuments({ status });
+      const orders = await TranslationOrder.find({ status }, null, {
         limit,
         skip,
         sort: {
@@ -271,7 +273,200 @@ const translationController = {
     }
   },
 
+  async changeStatus(req, res, next) {
+    const { id } = req.params;
+    try {
+      let { status, values, sender } = req.body;
+      if (!values) {
+        values = { subject: "", message: "" };
+      }
+      let notificationText;
+      switch (status) {
+        case "await":
+          notificationText = "please confirm your order";
+          break;
+        case "process":
+          notificationText = "your order in process";
+          break;
+        case "complete":
+          notificationText = "your order has been complited";
+          break;
+
+        default:
+          break;
+      }
+      const order = await TranslationOrder.findByIdAndUpdate(
+        id,
+        {
+          ...(status && { status }),
+        },
+        { new: true, runValidators: true }
+      ).populate("userId", "name email image phone");
+      if (!order) {
+        return next(customErrorHandler.emptyData("Could't updated"));
+      }
+      const notification = await Notification.create({
+        notification: notificationText,
+        type: "order",
+        userId: order.userId._id,
+        info: order,
+      });
+
+      io.sockets
+        .in(order.userId._id.toString())
+        .emit("notification", notification);
+
+      if (values.subject || values.message) {
+        io.sockets.in(order.userId._id.toString()).emit("orderMessage", {
+          _id: order.userId._id,
+          name: order.userId.name,
+          text: values.message,
+          orderId: order._id,
+          order: order,
+        });
+        try {
+          await Message.create(
+            values.message,
+            sender._id,
+            sender.role,
+            "",
+            order.userId._id,
+            order._id
+          );
+        } catch (err) {
+          console.log(err);
+        }
+        await emailService.awaitEMail(order.userId, values);
+      }
+      res
+        .status(201)
+        .json({ message: "Order Status Change SuccessFully", data: order });
+    } catch (e) {
+      console.log(e);
+      next(customErrorHandler.serverError(e));
+    }
+  },
+
+  async getOrdersByAwait(req, res, next) {
+    const { id } = req.params;
+    const { page, row, wait, status } = req.query;
+    const limit = +(row ? (row < 10 ? 10 : row) : 10);
+    const skip = +(page < 0 ? 0 : limit * page);
+
+    try {
+      const order = await TranslationOrder.aggregate([
+        {
+          $lookup: {
+            from: "messages",
+            as: "lastMessage",
+            let: { id: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$$id", "$orderId"]},
+                },
+              },
+              {
+                $sort: {
+                  createdAt: -1,
+                },
+              },
+              {
+                $limit: 1,
+              },
+            ],
+          },
+        },
+        { $unwind: "$lastMessage" },
+        {
+          $addFields: {
+            await: {
+              $cond: [
+                {
+                  $eq: ["$lastMessage.sender", mongoose.Types.ObjectId(id)],
+                },
+                "user",
+                "admin",
+              ],
+            },
+          },
+        },
+        {
+          $match: {
+            $and: [
+              { status: status ? status: 'new' },
+              { lastMessage: { $exists: true, $not: { $size: 0 } } },
+              { await: wait ? wait : "user" },
+            ],
+          },
+        },
+        { $skip: skip },
+        {
+          $limit: limit,
+        },
+        {
+          $lookup: {
+            from: "users",
+            let: { idu: "$userId" },
+            as: "userId",
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$$idu", "$_id"] },
+                },
+              },
+              {
+                $project:{
+                  _id: 1,
+                  name: 1,
+                  email: 1,
+                  image: 1,
+                }
+              },
+            ],
+          },
+        },
+        { $unwind: "$userId" },
+        {
+          $project: {
+            _id: 1,
+            userId: 1,
+            translationId: 1,
+            status: 1,
+            files: 1,
+            phone: 1,
+            service_req: 1,
+            sourceLanguage: 1,
+            targetlanguage: 1,
+            your_words: 1,
+            certification: 1,
+            await: 1,
+            notarization: 1,
+            deadline: 1,
+            country: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+        {
+          $facet: {
+            data: [{ $limit: limit }],
+            total: [{ $count: "count" }],
+          },
+        },
+      ]);
+      res.status(200).json({
+        data: order[0].data,
+        total: order[0].total[0] ? order[0].total[0].count : 0,
+      });
+    } catch (err) {
+      console.log(err);
+      return next(customErrorHandler.serverError(err));
+    }
+  },
+
   async updateOrder(req, res, next) {
+    const { id } = req.params;
     try {
       const {
         service_req,
@@ -286,9 +481,10 @@ const translationController = {
         phone,
         status,
       } = req.body;
+
       const filesUrl = req.files.map((e) => e.path);
       const order = await TranslationOrder.findByIdAndUpdate(
-        req.params.id,
+        id,
         {
           ...(service_req && { service_req }),
           ...(sourceLanguage && { sourceLanguage }),
