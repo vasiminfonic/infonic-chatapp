@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import { SERVER_Path } from '../config';
+import Translation from '../models/tralationOrders';
 
 
 
@@ -25,7 +26,7 @@ const messageSchema = mongoose.Schema(
 );
 
 
-messageSchema.statics.create = (content, sender, type, file, receiver, order) => {
+messageSchema.statics.create =async(content, sender, type, file, receiver, order) => {
     let msg = new messageModal({
         message: content,
         type: type,
@@ -34,11 +35,14 @@ messageSchema.statics.create = (content, sender, type, file, receiver, order) =>
         ...(file && {file: file}),
         ...(order && {orderId: order})
     });
-    return msg.save();
+    
+    const isMessage = await messageModal.exists({ orderId: order })
+    const saveMsg = msg.save();
+    if (!isMessage){
+      await Translation.findByIdAndUpdate(order, {status: 'await'});
+    } 
+    return saveMsg;
 }
-messageSchema.statics.latest = (count) => {
-    return this.find({}).sort({"_id": "desc"}).limit(count);
-};
 
 const messageModal = mongoose.model("Message", messageSchema, 'messages');
 

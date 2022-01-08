@@ -35,7 +35,7 @@ const userController = {
   async getUsersWithOrder(req, res, next) {
     const { page, row, user } = req.query;
     const filter = user ? { role: { $eq: user } } : { role: { $ne: "admin" } };
-    const limit = +(row ? (row < 10 ? 10 : row) : 10);
+    const limit = +(row ? (row < 5 ? 5 : row) : 5);
     const skip = +(page < 0 ? 0 : limit * page);
     try {
       const total = await User.countDocuments(filter);
@@ -44,15 +44,13 @@ const userController = {
       }
       const users = await User.aggregate([
         { $match: filter },
-        { $limit: limit },
-        { $skip: skip },
+
         {
           $lookup: {
             from: "translationOrders",
             localField: "_id",
             foreignField: "userId",
             as: "orders",
-            // pipeline: [],
           },
         },
         {
@@ -61,6 +59,7 @@ const userController = {
             image: { $concat: [SERVER_Path, "/", "$image"] },
           },
         },
+
         {
           $project: {
             name: 1,
@@ -72,6 +71,8 @@ const userController = {
             createdAt: 1,
           },
         },
+        { $skip: skip },
+        { $limit: limit },
       ]);
       if (!users) {
         return next(customErrorHandler.wrongCredentials());
