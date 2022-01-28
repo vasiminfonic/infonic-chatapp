@@ -1,15 +1,95 @@
-
-import jwt from 'jsonwebtoken';
-import joi from 'joi';
-import { JWTSTRING, SERVER_Path } from '../../config';
+import jwt from "jsonwebtoken";
+import joi from "joi";
+import { JWTSTRING, SERVER_Path } from "../../config";
 import { customErrorHandler } from "../../errorHandler";
 import User from "../../models/user";
-import fs from 'fs';
+import fs from "fs";
+import UserDto from "../../dtos/userDto";
 
 const userController = {
+  async getSingleUser(req, res, next) {
+    const { id } = req.params;
+    try {
+      const user = await User.findById(id);
+      if (!user) {
+        return next(
+          customErrorHandler.serverError("there is now any user with this id")
+        );
+      }
+      res
+        .status(200)
+        .json({ message: "user is there", data: new UserDto(user) });
+    } catch (err) {
+      console.log(err);
+      return next(customErrorHandler.serverError());
+    }
+  },
+
+  async editUser(req, res, next) {
+
+    const { id } = req.params;
+     const { name, email, password, country, role, phone } = req.body;
+     let image;
+     if (req.file) {
+       image = req.file.path;
+     }
+     // console.log(req.file, 'image')
+
+     try {
+       const { error } = joi
+         .object({
+           _id: joi.allow(),
+           createdAt:joi.allow(),
+           name: joi.string().allow(),
+           email: joi.string().email().allow(),
+           country: joi.string().allow(),
+           phone: joi.string().allow(),
+           password: joi.string().allow(),
+           image: joi.allow(),
+           role: joi.string().allow(),
+           confirmPassword: joi.allow(),
+         })
+         .validate(req.body);
+       if (error) {
+         if (image) {
+           fs.unlink(`${appRoot}/${image}`, (err) => {
+             if (err) {
+               return next(customErrorHandler.serverError(err.message));
+             }
+           });
+         }
+         return next(error);
+       }
+       const user = await User.findByIdAndUpdate(
+         id,
+         {
+           ...(name && { name }),
+           ...(email && { email }),
+           ...(password && { password }),
+           ...(image && { image }),
+           ...(country && { country }),
+           ...(role && { role }),
+           ...(phone && { phone }),
+         },
+         { new: true }
+       );
+       res.status(200).json({ message: "Updata Successfully", data: new UserDto(user) });
+     } catch (err) {
+       if (image) {
+         fs.unlink(`${appRoot}/${image}`, (err) => {
+           if (err) {
+             return next(customErrorHandler.serverError(err.message));
+           }
+         });
+       }
+       console.log(err);
+       return next(customErrorHandler.serverError(err));
+     }
+  },
+
   async getUsers(req, res, next) {
     const { page, row, user } = req.query;
-    const filter = user ? { role: { $eq: user } } : { role: { $ne: "admin" } };
+    const filter = user ? { role: { $eq: user } } : { role: { $eq: "user" } };
     const limit = +(row ? (row < 10 ? 10 : row) : 10);
     const skip = +(page < 0 ? 0 : limit * page);
     try {
@@ -22,6 +102,57 @@ const userController = {
         skip,
         sort: { createdAt: -1 },
       });
+      if (!users) {
+        return next(customErrorHandler.wrongCredentials());
+      }
+      res.status(200).json({ data: users, total });
+    } catch (err) {
+      console.log(err);
+      return next(customErrorHandler.serverError(err));
+    }
+  },
+  async getSubAdmin(req, res, next) {
+    const { page, row } = req.query;
+    const filter = { role: { $eq: "subAdmin" } };
+    const limit = +(row ? (row < 10 ? 10 : row) : 10);
+    const skip = +(page < 0 ? 0 : limit * page);
+    try {
+      const total = await User.countDocuments(filter);
+      if (!total) {
+        return next(customErrorHandler.wrongCredentials());
+      }
+     
+      const users = await User.aggregate([
+        { $match: filter },
+        {
+          $lookup: {
+            from: "assignOrders",
+            localField: "_id",
+            foreignField: "userId",
+            as: "orders",
+          },
+        },
+        // { $unwind: "$orders" },
+        {
+          $addFields: {
+            orders: { $size: "$orders.orders" },
+          },
+        },
+        {
+          $project: {
+            name: 1,
+            email: 1,
+            image: 1,
+            country: 1,
+            phone: 1,
+            orders: 1,
+            createdAt: 1,
+          },
+        },
+        { $skip: skip },
+        { $limit: limit },
+        { $sort: { createdAt: -1 } },
+      ]);
       if (!users) {
         return next(customErrorHandler.wrongCredentials());
       }
@@ -265,6 +396,21 @@ const userController = {
       return next(customErrorHandler.serverError(err));
     }
   },
+  async deleteUser(req, res, next) {
+    const { id } = req.params;
+    try {
+      const del = await User.findByIdAndDelete(id).select(
+        "name email image password"
+      );
+      if (!del) {
+        return next(customErrorHandler.serverError());
+      }
+      res.status(200).json({ message: "user has been deleted", data: del });
+    } catch (err) {
+      console.log(err);
+      return next(customErrorHandler.serverError());
+    }
+  },
 };
 
-export default userController  
+export default userController;

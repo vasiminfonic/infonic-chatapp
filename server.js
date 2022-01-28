@@ -4,9 +4,7 @@ import cors from "cors";
 import socket from "socket.io";
 import fs from "fs";
 import path from "path";
-import nodemailer from "nodemailer";
-// import {fileTypeFromBuffer} from 'file-type';
-// import {readChunk} from 'read-chunk';
+
 
 import { PORT, MONGODB_URL, SERVER_Path } from "./config/index.js";
 import { errorHandler } from "./errorHandler";
@@ -20,7 +18,6 @@ import {
   totalOnlineUsers,
 } from "./socketUsers";
 import Message from "./models/message";
-import emailService from "./services/emailService";
 
 // import socketIo from "./socketIo";
 

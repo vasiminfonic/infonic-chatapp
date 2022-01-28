@@ -285,13 +285,12 @@ const translationController = {
         case "await":
           notificationText = "please confirm your order";
           break;
-        case "process":
+        case "process" || "paidAwait":
           notificationText = "your order in process";
           break;
         case "complete":
           notificationText = "your order has been complited";
           break;
-
         default:
           break;
       }
@@ -363,7 +362,7 @@ const translationController = {
             pipeline: [
               {
                 $match: {
-                  $expr: { $eq: ["$$id", "$orderId"]},
+                  $expr: { $eq: ["$$id", "$orderId"] },
                 },
               },
               {
@@ -394,7 +393,7 @@ const translationController = {
         {
           $match: {
             $and: [
-              { status: status ? status: 'new' },
+              { status: status ? status : "new" },
               { lastMessage: { $exists: true, $not: { $size: 0 } } },
               { await: wait ? wait : "user" },
             ],
@@ -416,12 +415,12 @@ const translationController = {
                 },
               },
               {
-                $project:{
+                $project: {
                   _id: 1,
                   name: 1,
                   email: 1,
                   image: 1,
-                }
+                },
               },
             ],
           },
@@ -446,6 +445,149 @@ const translationController = {
             country: 1,
             createdAt: 1,
             updatedAt: 1,
+          },
+        },
+        {
+          $facet: {
+            data: [{ $limit: limit }],
+            total: [{ $count: "count" }],
+          },
+        },
+      ]);
+      res.status(200).json({
+        data: order[0].data,
+        total: order[0].total[0] ? order[0].total[0].count : 0,
+      });
+    } catch (err) {
+      console.log(err);
+      return next(customErrorHandler.serverError(err));
+    }
+  },
+
+  async getOrdersByAwaitForSubAdmin(req, res, next) {
+    const { id } = req.params;
+    const { page, row, wait, status } = req.query;
+    const limit = +(row ? (row < 10 ? 10 : row) : 10);
+    const skip = +(page < 0 ? 0 : limit * page);
+
+    try {
+      const order = await TranslationOrder.aggregate([
+        {
+          $lookup: {
+            from: "messages",
+            as: "lastMessage",
+            let: { id: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$$id", "$orderId"] },
+                },
+              },
+              {
+                $sort: {
+                  createdAt: -1,
+                },
+              },
+              {
+                $limit: 1,
+              },
+            ],
+          },
+        },
+        { $unwind: "$lastMessage" },
+        {
+          $lookup: {
+            from: "assignOrders",
+            let: { idu: mongoose.Types.ObjectId(id) },
+            as: "assignOrders",
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$userId", "$$idu"] },
+                },
+              },
+            ],
+          },
+        },
+        { $unwind: "$assignOrders" },
+        {
+          $addFields: {
+            await: {
+              $cond: [
+                {
+                  $eq: ["$lastMessage.sender", mongoose.Types.ObjectId(id)],
+                },
+                "user",
+                "admin",
+              ],
+            },
+            assignOrders: {
+              $map: {
+                input: "$assignOrders.orders",
+                as: "order",
+                in: "$$order.order",
+              },
+            },
+          },
+        },
+
+        {
+          $match: {
+            $and: [
+              { status: status ? status : "new" },
+              { lastMessage: { $exists: true, $not: { $size: 0 } } },
+              { await: wait ? wait : "user" },
+              // { _id:{$in: {'$oid': "$assignOrders"}}},
+            ],
+          },
+        },
+        { $skip: skip },
+        {
+          $limit: limit,
+        },
+        {
+          $lookup: {
+            from: "users",
+            let: { idu: "$userId" },
+            as: "userId",
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$$idu", "$_id"] },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  name: 1,
+                  email: 1,
+                  image: 1,
+                },
+              },
+            ],
+          },
+        },
+        { $unwind: "$userId" },
+        {
+          $project: {
+            _id: 1,
+            userId: 1,
+            translationId: 1,
+            status: 1,
+            files: 1,
+            phone: 1,
+            service_req: 1,
+            sourceLanguage: 1,
+            targetlanguage: 1,
+            your_words: 1,
+            certification: 1,
+            await: 1,
+            notarization: 1,
+            deadline: 1,
+            country: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            assignOrders: 1,
           },
         },
         {

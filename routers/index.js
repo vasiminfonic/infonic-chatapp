@@ -1,9 +1,10 @@
 import express from "express";
 import { loginController, messageController, orderController, userController } from "../controllers";
+import assignOrderControll from "../controllers/assignOrderController/assignOrderController";
 import mainOrderController from "../controllers/mainOrderController";
 import NotificationController from "../controllers/notificationController/notificationController";
 import translationController from "../controllers/translationController";
-import middle from '../middlewares'
+import middle from '../middlewares';
 import authMiddleware from "../middlewares/authMiddleware";
 
 
@@ -19,13 +20,20 @@ router.post('/forgot/verify',loginController.verifyUserOtp);
 
 
 router.get('/user', userController.getUser);
+router.get("/single-user/:id", userController.getSingleUser);
+router.post(
+  "/edit-user/:id",
+  middle.handleMultipartData,
+  userController.editUser
+);
 router.post('/user/update/:id',middle.handleMultipartData,userController.updateUser);
 router.get('/users', userController.getUsers);
 router.get('/admin',userController.getAdmin );
+router.get('/sub-admin', userController.getSubAdmin);
 router.get('/user/name/:search',userController.getUserSearch);
 router.get('/user/messages/:id', userController.getUserMessages);
 router.get("/users/order", userController.getUsersWithOrder);
-
+router.get("/user/delete/:id", userController.deleteUser);
 
 
 
@@ -35,6 +43,8 @@ router.get(`/order/user/:id`, orderController.getUserByOrder);
 router.get('/order/search/:search', orderController.getOrderSearch);
 router.get('/orders/user/:id', orderController.getOrdersofUser);
 
+router.post('/assign-order', assignOrderControll.assign);
+router.get("/assign-order/:userId", assignOrderControll.getAssignOrder);
 
 router.post('/mainorder',middle.handleMultipartDataMainOrder ,mainOrderController.addOrder);
 router.get('/mainorder' ,mainOrderController.getOrders)
@@ -58,6 +68,8 @@ router.put(
   middle.handleMultipartDataMainOrder,
   translationController.updateOrder
 );
+router.get("/translation", authMiddleware.checkAuth, translationController.getOrders);
+
 
 router.put(
   "/translation/status/:id",
@@ -79,6 +91,10 @@ router.get(
 router.get(
   "/translation/await/:id",
   translationController.getOrdersByAwait
+);
+router.get(
+  "/translation/sub-admin/await/:id",
+  translationController.getOrdersByAwaitForSubAdmin
 );
 
 
