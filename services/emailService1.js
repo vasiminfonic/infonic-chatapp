@@ -1,16 +1,16 @@
-let nodemailer,SERVER_Path,EMAIL_KEY,User;_5b3‍.x([["default",()=>_5b3‍.o]]);_5b3‍.w("nodemailer",[["default",["nodemailer"],function(v){nodemailer=v}]]);_5b3‍.w("../config",[["SERVER_Path",["SERVER_Path"],function(v){SERVER_Path=v}],["EMAIL_KEY",["EMAIL_KEY"],function(v){EMAIL_KEY=v}]]);_5b3‍.w("../models/user",[["default",["User"],function(v){User=v}]]);
-
-
+import nodemailer from "nodemailer";
+import { SERVER_Path, EMAIL_KEY } from "../config";
+import User from "../models/user";
 
 class EmailService {
   constructor() {
-    this.from = "vasim.infonic@gmail.com";
+    this.from ='"Singapore Translation Services" <singaporetranslatorss@gmail.com>';
     this.transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 465,
       secure: true, // true for 465, false for other ports
       auth: {
-        user: "vasim.infonic@gmail.com", // generated ethereal user
+        user: "singaporetranslatorss@gmail.com", // generated ethereal user
         pass: EMAIL_KEY, // generated ethereal password
       },
     });
@@ -87,4 +87,4 @@ class EmailService {
   }
 }
 
-_5b3‍.d(new EmailService());
+export default new EmailService();

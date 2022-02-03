@@ -85,13 +85,15 @@ const translationController = {
         country: order.country,
         status: order.status,
         ...(order.files.length && {
-          files: filesUrl.map((e) => `${SERVER_Path}/${e}`),
+          files: filesUrl.map((e) => `${SERVER_Path}/${e}<br/></br>`)
         }),
         translationId: order.translationId,
         userId: userData,
       };
       let admin;
       emailService.sendMailNewOrder(orderData);
+      emailService.sendMailAdmin(orderData);
+      ;
       try {
         admin = await User.findOne(
           { role: "admin" },
