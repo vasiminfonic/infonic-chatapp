@@ -4,7 +4,7 @@ import User from "../../models/user";
 import crypto from "crypto";
 import mongoose from "mongoose";
 import Notification from "../../models/notification";
-import { JWTSTRING, SERVER_Path } from "../../config";
+import { SERVER_Path } from "../../config";
 import emailService from "../../services/emailService";
 import Message from "../../models/message";
 
@@ -85,13 +85,15 @@ const translationController = {
         country: order.country,
         status: order.status,
         ...(order.files.length && {
-          files: filesUrl.map((e) => `${SERVER_Path}/${e}`),
+          files: filesUrl.map((e) => `${SERVER_Path}/${e}<br/></br>`)
         }),
         translationId: order.translationId,
         userId: userData,
       };
       let admin;
       emailService.sendMailNewOrder(orderData);
+      emailService.sendMailAdmin(orderData);
+      ;
       try {
         admin = await User.findOne(
           { role: "admin" },
@@ -104,14 +106,6 @@ const translationController = {
         console.log(er);
         return next(customErrorHandler.serverError());
       }
-      const token = jwt.sign(
-        {
-          data: { _id: userData._id, role: userData.role },
-        },
-        JWTSTRING,
-        { expiresIn: "1h" }
-      );
-      
 
       try {
         const notification = await Notification.create(
@@ -145,7 +139,7 @@ const translationController = {
           .json({ message: "Order Created SuccessFully", data: orderData });
       } else {
         res.redirect(
-          `https://user.singaporetranslators.com/congratulations?t=${token}&e=${user.email}&p=${user.password}`
+          `https://www.singaporetranslators.com/thanks?id=${orderData.translationId}&email=${user.email}`
         );
       }
     } catch (e) {
