@@ -28,9 +28,11 @@ const translationController = {
         deadline,
       } = req.body;
       let user;
+      let newUser;
       try {
         user = await User.findOne({ email });
         if (!user) {
+          newUser = true;
           const password = crypto.randomBytes(5).toString("hex");
           user = await User.create({
             name,
@@ -112,7 +114,6 @@ const translationController = {
         JWTSTRING,
         { expiresIn: "1h" }
       );
-      
 
       try {
         const notification = await Notification.create(
@@ -145,9 +146,166 @@ const translationController = {
           .status(200)
           .json({ message: "Order Created SuccessFully", data: orderData });
       } else {
-        res.redirect(
-          `https://user.singaporetranslators.com/congratulations?t=${token}&e=${user.email}&p=${user.password}`
+        if (newUser) {
+          res.redirect(
+            `https://user.singaporetranslators.com/congratulations?e=${user.email}&p=${user.password}`
+          );
+        } else {
+          res.redirect(
+            `https://www.singaporetranslators.com/thanks?id=${orderData.translationId}&email=${user.email}`
+          );
+        }
+      }
+    } catch (e) {
+      console.log(e);
+      next(customErrorHandler.serverError(e));
+    }
+  },
+  async addOrder(req, res, next) {
+    try {
+      const {
+        name,
+        email,
+        phone,
+        country,
+        websiteId,
+        service_req,
+        sourceLanguage,
+        targetlanguage,
+        your_words,
+        certification,
+        message,
+        notarization,
+        deadline,
+      } = req.body;
+      let user;
+      let newUser;
+      try {
+        user = await User.findOne({ email });
+        if (!user) {
+          newUser = true;
+          const password = crypto.randomBytes(5).toString("hex");
+          user = await User.create({
+            name,
+            email,
+            password,
+            country,
+            phone,
+          });
+          emailService.sendMailNewUser(user);
+        } else {
+          emailService.sendMailExistUser(user);
+        }
+      } catch (err) {
+        console.log(err);
+        return next(customErrorHandler.serverError());
+      }
+      const filesUrl = req.files.map((e) => e.path);
+      let order = await TranslationOrder.create({
+        userId: user._id,
+        phone,
+        service_req,
+        sourceLanguage,
+        targetlanguage,
+        your_words,
+        certification,
+        message,
+        notarization,
+        websiteId,
+        deadline,
+        country,
+        ...(filesUrl.length && { files: filesUrl }),
+      });
+      if (!order) {
+        return next(customErrorHandler.emptyData());
+      }
+      const userData = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        image: user.image ? user.image : "",
+      };
+      const orderData = {
+        _id: order._id,
+        phone: order.phone,
+        service_req: order.service_req,
+        sourceLanguage: order.sourceLanguage,
+        targetlanguage: order.targetlanguage,
+        your_words: order.your_words,
+        certification: order.certification,
+        message: order.message,
+        notarization: order.notarization,
+        deadline: order.deadline,
+        country: order.country,
+        status: order.status,
+        ...(order.files.length && {
+          files: filesUrl.map((e) => `${SERVER_Path}/${e}`),
+        }),
+        translationId: order.translationId,
+        userId: userData,
+      };
+      let admin;
+      emailService.sendMailNewOrder(orderData);
+      try {
+        admin = await User.findOne(
+          { role: "admin" },
+          "-password -updatedAt -__v"
         );
+        if (!admin) {
+          return next(customErrorHandler.serverError("admin Not found"));
+        }
+      } catch (er) {
+        console.log(er);
+        return next(customErrorHandler.serverError());
+      }
+      const token = jwt.sign(
+        {
+          data: { _id: userData._id, role: userData.role },
+        },
+        JWTSTRING,
+        { expiresIn: "1h" }
+      );
+
+      try {
+        const notification = await Notification.create(
+          {
+            notification: "new order received",
+            type: "order",
+            userId: admin._id,
+            info: orderData,
+          },
+          {
+            notification: "your order received",
+            type: "order",
+            userId: user._id,
+            info: orderData,
+          }
+        );
+        io.sockets
+          .in(admin._id.toString())
+          .emit("notification", notification[0]);
+        io.sockets
+          .in(user._id.toString())
+          .emit("notification", notification[1]);
+      } catch (err) {
+        console.log(err);
+        next(customErrorHandler.serverError(err));
+      }
+      const { authorization } = req.headers;
+      if (authorization) {
+        return res
+          .status(200)
+          .json({ message: "Order Created SuccessFully", data: orderData });
+      } else {
+        if (newUser) {
+          res.redirect(
+            `https://user.singaporetranslators.com/congratulations?e=${user.email}&p=${user.password}`
+          );
+        } else {
+          res.redirect(
+            `https://www.singaporetranslators.com/thanks?id=${orderData.translationId}&email=${user.email}`
+          );
+        }
       }
     } catch (e) {
       console.log(e);
